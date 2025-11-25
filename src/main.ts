@@ -22,8 +22,8 @@ export default class FastSync extends Plugin {
   websocket: WebSocketClient
   SyncSkipFiles: SyncSkipFiles = {}
   SyncSkipDelFiles: SyncSkipFiles = {}
-  SyncSkipModifyiles: SyncSkipFiles = {}
-  clipboardReadTip :string = ""
+  SyncSkipModifyFiles: SyncSkipFiles = {}
+  clipboardReadTip: string = ""
 
   editorChangeTimeout: EditorChangeTimeout = {}
 
@@ -103,7 +103,9 @@ export default class FastSync extends Plugin {
   async saveSettings() {
     this.websocket.isSyncAllFilesInProgress = false
     if (this.settings.api && this.settings.apiToken) {
-      this.settings.wsApi = this.settings.api.replace(/^http/, "ws")
+      this.settings.wsApi = this.settings.api
+        .replace(/^http/, "ws")
+        .replace(/\/+$/, '') // 去除尾部斜杠
     }
     this.websocket.unRegister()
     if (this.settings.syncEnabled) {

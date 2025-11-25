@@ -151,7 +151,10 @@ export class SettingTab extends PluginSettingTab {
       await window.navigator.clipboard.writeText(
         JSON.stringify(
           {
-            settings: this.plugin.settings,
+            settings: {
+              ...this.plugin.settings,
+              apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
+            },
             pluginVersion: this.plugin.manifest.version,
           },
           null,

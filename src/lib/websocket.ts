@@ -5,6 +5,13 @@ import { dump, isWsUrl } from "./helps";
 import FastSync from "../main";
 
 
+// WebSocket 连接常量
+const WEBSOCKET_RETRY_DELAY = 5000 // 重试延迟 (毫秒)
+const MAX_RECONNECT_ATTEMPTS = 15 // 最大重连次数
+const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
+const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
+
+
 export class WebSocketClient {
   private ws: WebSocket
   private wsApi: string
@@ -21,6 +28,8 @@ export class WebSocketClient {
   constructor(plugin: FastSync) {
     this.plugin = plugin
     this.wsApi = plugin.settings.wsApi
+      .replace(/^http/, "ws")
+      .replace(/\/+$/, '') // 去除尾部斜杠
   }
 
   public isConnected(): boolean {
@@ -28,11 +37,13 @@ export class WebSocketClient {
   }
 
   public register() {
-    if ((!this.ws || this.ws.readyState !== WebSocket.OPEN ) && isWsUrl(this.plugin.settings.wsApi)) {
+    if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {
       this.isRegister = true
-      this.ws = new WebSocket(this.plugin.settings.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
-      this.count ++
-      this.ws.onerror = (error) => {}
+      this.ws = new WebSocket(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
+      this.count++
+      this.ws.onerror = (error) => {
+        dump("WebSocket error:", error)
+      }
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
         this.isOpen = true
@@ -47,7 +58,7 @@ export class WebSocketClient {
         window.clearInterval(this.checkConnection)
         if (e.reason == "AuthorizationFaild") {
           new Notice("Remote Service Connection Closed: " + e.reason)
-        }else if (e.reason == "ClientClose") {
+        } else if (e.reason == "ClientClose") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         }
         if (this.isRegister && (e.reason != "AuthorizationFaild" && e.reason != "ClientClose")) {
@@ -101,7 +112,7 @@ export class WebSocketClient {
   //ddd
   public checkReConnect() {
     window.clearTimeout(this.checkReConnectTimeout)
-    if (this.timeConnect > 15) {
+    if (this.timeConnect > MAX_RECONNECT_ATTEMPTS) {
       return
     }
     if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
@@ -109,7 +120,7 @@ export class WebSocketClient {
       this.checkReConnectTimeout = window.setTimeout(() => {
         dump("Service waiting reconnect: " + this.timeConnect)
         this.register()
-      }, 3000 * this.timeConnect)
+      }, RECONNECT_BASE_DELAY * this.timeConnect)
     }
   }
   public StartHandle() {
@@ -124,7 +135,7 @@ export class WebSocketClient {
       } else {
         this.isOpen = false
       }
-    }, 3000)
+    }, CONNECTION_CHECK_INTERVAL)
   }
 
   public async MsgSend(action: string, data: unknown, type: string = "text", isSync: boolean = false) {
@@ -132,7 +143,7 @@ export class WebSocketClient {
     while (this.isAuth != true) {
       if (!this.isRegister) return
       dump("Service not auth, msgsend waiting...")
-      await sleep(5000) // 每隔一秒重试一次
+      await sleep(WEBSOCKET_RETRY_DELAY) // 每隔一秒重试一次
     }
     // 检查是否有同步任务正在进行中
     while (isSync == false && this.isSyncAllFilesInProgress == true) {
@@ -141,16 +152,16 @@ export class WebSocketClient {
         return
       }
       dump("Sync task inprogress, msgsend waiting...")
-      await sleep(5000) // 每隔一秒重试一次
+      await sleep(WEBSOCKET_RETRY_DELAY) // 每隔一秒重试一次
     }
     this.Send(action, data, type)
   }
 
   public async Send(action: string, data: unknown, type: string = "text") {
-    while (this.ws.readyState !== WebSocket.OPEN ) {
+    while (this.ws.readyState !== WebSocket.OPEN) {
       if (!this.isRegister) return
       dump("Service not connected, msgsend waiting...")
-      await sleep(5000) // 每隔一秒重试一次
+      await sleep(WEBSOCKET_RETRY_DELAY) // 每隔一秒重试一次
     }
     if (type == "text") {
       this.ws.send(action + "|" + data)
