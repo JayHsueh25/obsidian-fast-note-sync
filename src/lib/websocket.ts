@@ -89,7 +89,7 @@ export class WebSocketClient {
           } else {
             this.isAuth = true
             dump("Service authorization success")
-            this.flushQueue()
+            this.FlushQueue()
             this.StartHandle()
           }
         }
@@ -164,6 +164,7 @@ export class WebSocketClient {
       return
     }
 
+    dump(`Sending message: ${action}`)
     if (type == "text") {
       this.ws.send(action + "|" + data)
     } else if (type == "json") {
@@ -171,12 +172,13 @@ export class WebSocketClient {
     }
   }
 
-  private flushQueue() {
+  public FlushQueue() {
     if (this.messageQueue.length === 0) return
 
     dump(`Flushing ${this.messageQueue.length} queued messages`)
     while (this.messageQueue.length > 0) {
       const msg = this.messageQueue.shift()
+      dump(`Flushing message: `, msg)
       if (msg) {
         this.Send(msg.action, msg.data, msg.type)
       }

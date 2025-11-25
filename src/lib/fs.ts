@@ -17,6 +17,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync)
   const contentHash = hashContent(content)
 
   if (plugin.syncSkipFiles[file.path] && plugin.syncSkipFiles[file.path] == contentHash) {
+    dump(`Note modify skip`, file.path, contentHash)
     return
   }
 
@@ -244,9 +245,10 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: 
 
 // ReceiveNoteSyncNeed 接收处理需要上传需求
 export const ReceiveNoteSyncNeedPush = async function (data: ReceiveCheckData, plugin: FastSync) {
-  dump(`Receive note modify:`, data.path, data.mtime)
+  dump(`Receive note need push:`, data.path, data.mtime)
   const file = plugin.app.vault.getFileByPath(data.path)
   if (file) {
+    delete plugin.syncSkipFiles[file.path]
     NoteModify(file, plugin)
   }
 }
@@ -279,6 +281,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveData, plugin: Fas
   plugin.settings.lastSyncTime = data.lastTime
   await plugin.saveData(plugin.settings)
   plugin.websocket.isSyncAllFilesInProgress = false
+  plugin.websocket.FlushQueue()
 }
 
 type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
