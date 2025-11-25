@@ -1,8 +1,8 @@
 // 土耳其语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const tr: Partial<LangMap> = {
   "FastSync": "Kullanıcıya rahatsızlık vermeden, ipek gibi pürüzsüz ve çoklu platformda gerçek zamanlı senkronizasyon sağlayan bir not senkronizasyon eklentisi sunmaya odaklanmıştır, Mac, Windows, Android, iOS gibi platformları destekler ve çok dilli destek sunar.",
   "同步全部笔记(覆盖远端)": "Tüm notları senkronize et (uzaktakini üzerine yaz)",
   "同步全部笔记": "Tüm notları senkronize et",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Hata ayıklama bilgilerini panoya kopyala, hassas bilgiler içerebilir!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Kısayol tuşlarıyla konsolu açarak bu eklentinin ve diğer eklentilerin günlüklerini görebilirsiniz.",
 }
+
+export default tr;

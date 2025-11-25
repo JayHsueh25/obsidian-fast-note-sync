@@ -1,8 +1,8 @@
 // 印度尼西亚语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const id: Partial<LangMap> = {
   "FastSync": "Fokus untuk menyediakan plugin sinkronisasi catatan yang mulus, tanpa gangguan, dan sinkronisasi real-time lintas platform untuk pengguna, mendukung platform seperti Mac, Windows, Android, iOS, dan juga menyediakan dukungan multi-bahasa.",
   "同步全部笔记(覆盖远端)": "Sinkronkan semua catatan (menimpa jarak jauh)",
   "同步全部笔记": "Menyinkronkan semua catatan",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Salin informasi debug ke clipboard, mungkin berisi informasi sensitif!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Dengan menggunakan pintasan keyboard untuk membuka konsol, Anda dapat melihat log dari plugin ini dan plugin lainnya.",
 }
+
+export default id;

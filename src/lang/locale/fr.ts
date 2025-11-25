@@ -1,8 +1,8 @@
 // 法语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const fr: Partial<LangMap> = {
   "FastSync": "Concentré sur la fourniture d'un plugin de synchronisation de notes sans distraction, extrêmement fluide et avec synchronisation en temps réel sur plusieurs appareils, compatible avec les plateformes Mac, Windows, Android, iOS et offrant une prise en charge multilingue.",
   "同步全部笔记(覆盖远端)": "Synchroniser toutes les notes (écraser la distante)",
   "同步全部笔记": "Synchroniser toutes les notes",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copier les informations de débogage dans le presse-papiers, elles peuvent contenir des informations sensibles !",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "En ouvrant la console avec un raccourci clavier, vous pouvez voir les journaux de ce plugin et d'autres plugins.",
 }
+
+export default fr;

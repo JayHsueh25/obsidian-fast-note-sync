@@ -1,8 +1,8 @@
 // 越南语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const vi: Partial<LangMap> = {
   "FastSync": "Tập trung cung cấp cho người dùng một plugin đồng bộ ghi chú không phiền nhiễu, mượt mà như lụa và đồng bộ thời gian thực trên nhiều nền tảng, hỗ trợ các nền tảng như Mac, Windows, Android, iOS và cung cấp hỗ trợ đa ngôn ngữ.",
   "同步全部笔记(覆盖远端)": "Đồng bộ tất cả ghi chú (ghi đè từ xa)",
   "同步全部笔记": "Đồng bộ tất cả ghi chú",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Sao chép thông tin gỡ lỗi vào khay nhớ tạm, có thể chứa thông tin nhạy cảm!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Bằng cách sử dụng phím tắt để mở bảng điều khiển, bạn có thể xem nhật ký của plugin này và các plugin khác.",
 }
+
+export default vi;

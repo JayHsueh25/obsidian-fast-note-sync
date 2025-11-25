@@ -1,8 +1,8 @@
 // 丹麦语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const da: Partial<LangMap> = {
   "FastSync": "Fokus på at give brugerne en uforstyrret, silkeblød oplevelse med en plugin til synkronisering af noter i realtid på tværs af flere enheder, der understøtter platforme som Mac, Windows, Android, iOS og tilbyder flersproget support.",
   "同步全部笔记(覆盖远端)": "Synkroniser alle noter (overskriv fjern)",
   "同步全部笔记": "Synkroniser alle noter",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopiér fejlretningsoplysningerne til udklipsholderen, det kan indeholde følsomme oplysninger!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Åbn konsollen med en genvejstast, så kan du se loggene for denne udvidelse og andre udvidelser.",
 }
+
+export default da;

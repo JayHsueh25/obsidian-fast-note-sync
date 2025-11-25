@@ -1,8 +1,8 @@
 // 匈牙利语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const hu: Partial<LangMap> = {
   "FastSync": "A hangsúly az, hogy zavartalan, selymesen sima, többplatformos, valós idejű szinkronizálást biztosító jegyzettömb bővítményt kínáljon a felhasználóknak, amely támogatja a Mac, Windows, Android, iOS és más platformokat, és több nyelvi támogatást nyújt.",
   "同步全部笔记(覆盖远端)": "Szinkronizálja az összes jegyzetet (távoli felülírása)",
   "同步全部笔记": "Minden jegyzet szinkronizálása",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Másolja a hibakeresési információkat a vágólapra, érzékeny információkat tartalmazhat!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "A vezérlőpult gyorsbillentyű segítségével történő megnyitásával megtekintheti ezt a bővítményt és más bővítmények naplóit.",
 }
+
+export default hu;

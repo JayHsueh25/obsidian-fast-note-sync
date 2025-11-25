@@ -1,8 +1,8 @@
 // 加泰罗尼亚语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const ca: Partial<LangMap> = {
   "FastSync": "Ens concéntrens a proporcionar als usuaris un complement de sincronització de notes sense interrupcions, suau com la seda i de sincronització en temps real a diversos dispositius, compatible amb plataformes com Mac, Windows, Android, iOS, i oferim suport multilingüe.",
   "同步全部笔记(覆盖远端)": "Sincronitza totes les notes (sobreescriu les remotes)",
   "同步全部笔记": "Sincronitza totes les notes",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copia la informació de depuració al porta-retalls, pot contenir informació sensible!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Per obrir la consola amb una drecera de teclat, pots veure els registres d'aquest complement i d'altres complements.",
 }
+
+export default ca;

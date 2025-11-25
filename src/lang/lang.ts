@@ -1,7 +1,6 @@
 import zhTW from "src/lang/locale/zh-tw";
 import zhCN from "src/lang/locale/zh-cn";
 import ptBR from "src/lang/locale/pt-br";
-import enGB from "src/lang/locale/en-gb";
 import vi from "src/lang/locale/vi";
 import uk from "src/lang/locale/uk";
 import tr from "src/lang/locale/tr";
@@ -46,7 +45,6 @@ export const localeMap: { [k: string]: Partial<typeof en> } = {
     da,
     de,
     en,
-    "en-gb": enGB,
     es,
     // fa,
     fr,
@@ -131,7 +129,7 @@ export function $(
     // str 的类型现在必为 string，安全用于索引
     const key = str as string;
     const fallback = en[key];
-    const result = (locale && (locale[key] as string | undefined)) ?? fallback;
+    const result = (locale && (locale[key] as string)) ?? fallback ?? key;
 
     if (params) {
         return interpolate(result, params);

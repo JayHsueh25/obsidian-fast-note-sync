@@ -1,8 +1,8 @@
 // 韩语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const ko: Partial<LangMap> = {
   "FastSync": "사용자에게 방해받지 않고 부드럽고 여러 기기에서 실시간 동기화되는 메모 동기화 플러그인을 제공하며, Mac, Windows, Android, iOS 등의 플랫폼을 지원하고 다국어 지원을 제공합니다.",
   "同步全部笔记(覆盖远端)": "모든 노트 동기화(원격 덮어쓰기)",
   "同步全部笔记": "모든 노트 동기화하기",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "디버그 정보를 클립보드에 복사하기, 민감한 정보가 포함될 수 있습니다!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "단축키를 통해 콘솔을 열면 이 플러그인과 다른 플러그인의 로그를 볼 수 있습니다.",
 }
+
+export default ko;

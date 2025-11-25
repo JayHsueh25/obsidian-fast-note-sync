@@ -1,8 +1,8 @@
 // 英语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const en: Partial<LangMap> = {
   "FastSync": "Focus on providing users with a non-intrusive, silky smooth, multi-platform real-time synchronized note-taking plugin, supporting Mac, Windows, Android, iOS, and offering multi-language support.",
   "同步全部笔记(覆盖远端)": "Sync all notes (overwrite remote)",
   "同步全部笔记": "Sync all notes",
@@ -29,10 +29,13 @@ export default <lang>{
   "支持": "Support",
   "捐赠": "Donation",
   "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "If you like this plugin, please consider donating to support continued development.",
-  "Buy Me a Coffee at ko-fi.com": "请我喝咖啡，网址：ko-fi.com",
+  "Buy Me a Coffee at ko-fi.com": "Buy Me a Coffee at ko-fi.com",
   "复制 Debug 信息": "Copy debug information",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copy debug information to the clipboard, may contain sensitive information!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "By using the shortcut key to open the console, you can see the logs of this plugin and other plugins.",
   "console_mac": "Cmd (⌘) + Option (⌥) + I",
   "console_windows": "Ctrl (⌃) + Shift (⇧) + I",
 }
+
+export default en;
+

@@ -1,8 +1,8 @@
 // 阿尔巴尼亚语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const sq: Partial<LangMap> = {
   "FastSync": "Përqendrohuni në ofrimin e një shtojce për sinkronizim shënimesh pa ndërprerje, me një veprim të lëmuar dhe sinkronizim në kohë reale në shumë pajisje, mbështet platformat Mac, Windows, Android, iOS etj., dhe ofron mbështetje për shumë gjuhë.",
   "同步全部笔记(覆盖远端)": "Sinkronizo të gjitha shënimet (mbulo të largëtën)",
   "同步全部笔记": "Sinkronizo të gjitha shënimet",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopjoni informacionin e shkyçjes në kujtesën e përkohshme, mund të përmbajë informacion të ndjeshëm!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Përmes shkurtoreve hapni konsolën, mund të shihni regjistrat e këtij shtojce dhe të shtojcave të tjera.",
 }
+
+export default sq;

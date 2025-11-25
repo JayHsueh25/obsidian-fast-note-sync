@@ -1,8 +1,8 @@
 // 马来语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const ms: Partial<LangMap> = {
   "FastSync": "Fokus untuk menyediakan pemalam penyelarasan nota yang bebas gangguan, licin seperti sutera, dan penyelarasan masa nyata menyeluruh, menyokong platform seperti Mac, Windows, Android, iOS, dan menawarkan sokongan berbilang bahasa.",
   "同步全部笔记(覆盖远端)": "Menyelaraskan semua nota (menimpa jarak jauh)",
   "同步全部笔记": "Segerakkan semua nota",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Salin maklumat nyahpepijat ke papan klip, mungkin mengandungi info sensitif!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Dengan menekan kekunci pintas untuk membuka konsol, anda boleh melihat log pemalam ini dan pemalam lain.",
 }
+
+export default ms;

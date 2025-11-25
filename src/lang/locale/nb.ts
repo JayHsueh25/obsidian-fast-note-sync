@@ -1,8 +1,8 @@
 // 挪威语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const nb: Partial<LangMap> = {
   "FastSync": "Vi fokuserer på å tilby brukerne en forstyrrelsesfri, silkemyk og flerplattform reeltidssynkronisering for notatsynkronisering, støttende plattformer som Mac, Windows, Android, iOS, og tilbyr flerspråklig støtte.",
   "同步全部笔记(覆盖远端)": "Synkroniser alle notater (overstyrer eksterne)",
   "同步全部笔记": "Synkroniser alle notater",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopier feilsøkingsinformasjon til utklippstavlen, kan inneholde sensitiv informasjon!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Ved å bruke hurtigtasten for å åpne konsollen, kan du se loggen for dette pluginet og andre pluginer",
 }
+
+export default nb;

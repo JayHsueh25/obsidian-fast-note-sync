@@ -1,8 +1,8 @@
 // 简体中文
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const zh_cn: Partial<LangMap> = {
   "FastSync": "可私有化部署，专注为用户提供无打扰、丝般顺滑、多端实时同步的笔记同步插件，支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。",
   "同步全部笔记(覆盖远端)": "同步全部笔记(覆盖远端)",
   "同步全部笔记": "同步全部笔记",
@@ -40,3 +40,4 @@ export default <lang>{
 }
 
 
+export default zh_cn;

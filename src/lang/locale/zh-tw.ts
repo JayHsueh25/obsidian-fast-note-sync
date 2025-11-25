@@ -1,8 +1,8 @@
 // 繁体中文
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const zh_tw: Partial<LangMap> = {
   "FastSync": "專注為使用者提供無打擾、絲般順滑、多端即時同步的筆記同步插件，支持 Mac、Windows、Android、iOS 等平台，並提供多語言支持。",
   "同步全部笔记(覆盖远端)": "同步全部筆記(覆蓋遠端)",
   "同步全部笔记": "同步全部筆記",
@@ -34,3 +34,6 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "將調試信息複製到剪貼板，可能包含敏感信!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "透過快捷鍵開啟控制台，你可以看到這個插件和其他插件的日誌",
 }
+
+
+export default zh_tw;

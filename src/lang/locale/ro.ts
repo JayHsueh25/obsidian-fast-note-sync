@@ -1,8 +1,8 @@
 // 罗马尼亚语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const ro: Partial<LangMap> = {
   "FastSync": "Concentrați-vă pe oferirea utilizatorilor unui plugin de sincronizare a notițelor fără întreruperi, neted ca mătasea, cu sincronizare în timp real pe mai multe platforme, acceptând platformele Mac, Windows, Android, iOS și oferind suport multilingv.",
   "同步全部笔记(覆盖远端)": "Sincronizați toate notele (suprascrieți distanța)",
   "同步全部笔记": "Sincronizați toate notele",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copiați informațiile de depanare în clipboard, pot conține informații sensibile!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Puteți deschide consola printr-o comandă rapidă de la tastatură pentru a vedea jurnalul acestui plugin și al altor pluginuri.",
 }
+
+export default ro;

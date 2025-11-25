@@ -1,8 +1,8 @@
 // 荷兰语
-import { lang } from "../lang";
+import type { LangMap } from "../lang";
 
 
-export default <lang>{
+const nl: Partial<LangMap> = {
   "FastSync": "Gefocust op het bieden van een ongestoorde, zijdezachte, multi-platform real-time synchronisatie voor notities, ondersteund op Mac, Windows, Android, iOS en andere platforms, en biedt meertalige ondersteuning.",
   "同步全部笔记(覆盖远端)": "Synchroniseer alle notities (overschrijf op afstand)",
   "同步全部笔记": "Synchroniseer alle notities",
@@ -34,3 +34,5 @@ export default <lang>{
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopieer debug-informatie naar het klembord, dit kan gevoelige informatie bevatten!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Met sneltoetsen de console openen, je kunt de logboeken van deze plugin en andere plugins zien.",
 }
+
+export default nl;
