@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Notice, Setting, Platform } from "obsidian";
-import { createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 
 import { SettingsView } from "./views/settings-view";
 import { KofiImage } from "./lib/icons";
@@ -45,11 +45,19 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
+  root: Root | null = null
 
   constructor(app: App, plugin: FastSync) {
     super(app, plugin)
     this.plugin = plugin
     this.plugin.clipboardReadTip = ""
+  }
+
+  hide(): void {
+    if (this.root) {
+      this.root.unmount()
+      this.root = null
+    }
   }
 
   display(): void {
@@ -81,8 +89,8 @@ export class SettingTab extends PluginSettingTab {
     const apiSet = set.createDiv()
     apiSet.addClass("fast-note-sync-settings")
 
-    const apiSetReact = createRoot(apiSet)
-    apiSetReact.render(<SettingsView plugin={this.plugin} />)
+    this.root = createRoot(apiSet)
+    this.root.render(<SettingsView plugin={this.plugin} />)
 
     const api = new Setting(set)
       .setName($("远端服务地址"))

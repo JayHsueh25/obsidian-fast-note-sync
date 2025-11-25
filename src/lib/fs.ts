@@ -16,7 +16,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync)
   const content: string = await plugin.app.vault.cachedRead(file)
   const contentHash = hashContent(content)
 
-  if (plugin.SyncSkipFiles[file.path] && plugin.SyncSkipFiles[file.path] == contentHash) {
+  if (plugin.syncSkipFiles[file.path] && plugin.syncSkipFiles[file.path] == contentHash) {
     return
   }
 
@@ -30,7 +30,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync)
     contentHash: contentHash,
   }
   plugin.websocket.MsgSend("NoteModify", data, "json")
-  plugin.SyncSkipFiles[file.path] = data.contentHash
+  plugin.syncSkipFiles[file.path] = data.contentHash
 
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
 }
@@ -41,8 +41,8 @@ export const NoteDelete = async function (file: TAbstractFile, plugin: FastSync)
   if (!(file instanceof TFile)) {
     return
   }
-  if (plugin.SyncSkipDelFiles[file.path]) {
-    delete plugin.SyncSkipDelFiles[file.path]
+  if (plugin.syncSkipDelFiles[file.path]) {
+    delete plugin.syncSkipDelFiles[file.path]
     return
   }
   NoteDeleteByPath(file.path, plugin)
@@ -83,7 +83,7 @@ export const NoteContentModify = async function (file: TAbstractFile, content: s
     contentHash: hashContent(content),
   }
   plugin.websocket.MsgSend("NoteContentModify", data, "json")
-  plugin.SyncSkipFiles[file.path] = data.contentHash
+  plugin.syncSkipFiles[file.path] = data.contentHash
 
   dump(`Note content modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
 }
@@ -220,7 +220,7 @@ interface ReceiveCheckData {
 
 // ReceiveNoteModify 接收文件修改
 export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: FastSync) {
-  if (plugin.SyncSkipFiles[data.path] && plugin.SyncSkipFiles[data.path] == data.contentHash) {
+  if (plugin.syncSkipFiles[data.path] && plugin.syncSkipFiles[data.path] == data.contentHash) {
     return
   }
   dump(`Receive note modify:`, data.action, data.path, data.contentHash, data.mtime, data.pathHash)
@@ -228,7 +228,7 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: 
   const file = plugin.app.vault.getFileByPath(data.path)
   if (file) {
     if (data.contentHash != hashContent(await plugin.app.vault.cachedRead(file))) {
-      plugin.SyncSkipFiles[data.path] = data.contentHash
+      plugin.syncSkipFiles[data.path] = data.contentHash
       await plugin.app.vault.modify(file, data.content, { ctime: data.ctime, mtime: data.mtime })
     }
   } else {
@@ -237,7 +237,7 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: 
       const dirExists = await plugin.app.vault.getFolderByPath(folder)
       if (dirExists == null) await plugin.app.vault.createFolder(folder)
     }
-    plugin.SyncSkipFiles[data.path] = data.contentHash
+    plugin.syncSkipFiles[data.path] = data.contentHash
     await plugin.app.vault.create(data.path, data.content, { ctime: data.ctime, mtime: data.mtime })
   }
 }
@@ -267,7 +267,7 @@ export const ReceiveNoteSyncDelete = async function (data: ReceiveData, plugin: 
   dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash)
   const file = plugin.app.vault.getFileByPath(data.path)
   if (file instanceof TFile) {
-    plugin.SyncSkipDelFiles[data.path] = "{ReceiveNoteSyncDelete}"
+    plugin.syncSkipDelFiles[data.path] = "{ReceiveNoteSyncDelete}"
     plugin.app.vault.delete(file)
     //await plugin.app.vault.delete(file)s
   }

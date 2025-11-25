@@ -1,9 +1,8 @@
-import { Plugin } from "obsidian";
+import { Plugin, setIcon } from "obsidian";
 
 import { NoteModify, NoteDelete, NoteRename, OverrideRemoteAllFiles, SyncAllFiles } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
-import { AddRibbonIcon } from "./lib/menu";
 import { isWsUrl } from "./lib/helps";
 import { $ } from "./lang/lang";
 
@@ -20,20 +19,19 @@ export default class FastSync extends Plugin {
   wsSettingChange: boolean
   settings: PluginSettings
   websocket: WebSocketClient
-  SyncSkipFiles: SyncSkipFiles = {}
-  SyncSkipDelFiles: SyncSkipFiles = {}
-  SyncSkipModifyFiles: SyncSkipFiles = {}
+  syncSkipFiles: SyncSkipFiles = {}
+  syncSkipDelFiles: SyncSkipFiles = {}
+  syncSkipModifyFiles: SyncSkipFiles = {}
   clipboardReadTip: string = ""
 
   editorChangeTimeout: EditorChangeTimeout = {}
 
   ribbonIcon: HTMLElement
-  ribbonIconInterval: number
   ribbonIconStatus: boolean = false
 
 
   async onload() {
-    this.SyncSkipFiles = {}
+    this.syncSkipFiles = {}
 
     await this.loadSettings()
     this.settingTab = new SettingTab(this.app, this)
@@ -41,9 +39,14 @@ export default class FastSync extends Plugin {
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
 
+    // Create Ribbon Icon once
+    this.ribbonIcon = this.addRibbonIcon("loader-circle", "Fast Sync: " + $("同步全部笔记"), () => {
+      SyncAllFiles(this)
+    })
+
     this.websocket.isSyncAllFilesInProgress = false
     if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
-      this.websocket.register()
+      this.websocket.register((status) => this.updateRibbonIcon(status))
     } else {
       this.websocket.unRegister()
     }
@@ -53,21 +56,6 @@ export default class FastSync extends Plugin {
     this.registerEvent(this.app.vault.on("modify", (file) => NoteModify(file, this)))
     this.registerEvent(this.app.vault.on("delete", (file) => NoteDelete(file, this)))
     this.registerEvent(this.app.vault.on("rename", (file, oldfile) => NoteRename(file, oldfile, this)))
-
-    // 注册编译器事件 // 不监听编辑器内容变化 因为 存在缓存 导致mtime 不准确
-    // this.registerEvent(
-    //   this.app.workspace.on("editor-change", async (editor, mdFile) => {
-    //     if (mdFile.file == null) return
-    //     const content = editor.getValue()
-    //     this.SyncSkipModifyiles[mdFile.file.path] = mdFile.file.path
-    //     clearTimeout(this.editorChangeTimeout[mdFile.file.path])
-    //     this.editorChangeTimeout[mdFile.file.path] = setTimeout(() => {
-    //       if (mdFile.file == null) return
-    //       FileContentModify(mdFile.file, content, this)
-    //       delete this.SyncSkipModifyiles[mdFile.file.path]
-    //     }, 3000)
-    //   })
-    // )
 
     // 注册命令
     this.addCommand({
@@ -81,19 +69,22 @@ export default class FastSync extends Plugin {
       name: $("同步全部笔记"),
       callback: async () => SyncAllFiles(this),
     })
-
-    // this.addRibbonIcon("loader-circle", "Fast Note Sync: " + "ssssss", async () => {
-    //   console.log(await this.app.vault.adapter.stat("未命名.md"))
-    // })
-
-    AddRibbonIcon(this)
   }
 
   onunload() {
     // 取消注册文件事件
     this.websocket.isSyncAllFilesInProgress = false
-    window.clearInterval(this.ribbonIconInterval)
     this.websocket.unRegister()
+  }
+
+  updateRibbonIcon(status: boolean) {
+    if (status) {
+      setIcon(this.ribbonIcon, "rotate-cw")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Sync: " + $("同步全部笔记") + " (Connected)")
+    } else {
+      setIcon(this.ribbonIcon, "loader-circle")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Sync: " + $("同步全部笔记") + " (Disconnected)")
+    }
   }
 
   async loadSettings() {
@@ -111,7 +102,7 @@ export default class FastSync extends Plugin {
     if (this.settings.syncEnabled) {
       if (this.wsSettingChange) {
         this.websocket.unRegister()
-        this.websocket.register()
+        this.websocket.register((status) => this.updateRibbonIcon(status))
         this.wsSettingChange = false
       }
 

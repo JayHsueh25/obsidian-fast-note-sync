@@ -1,5 +1,4 @@
-import { Notice } from "obsidian";
-import dayjs from "dayjs";
+import { Notice, moment } from "obsidian";
 
 
 /**
@@ -9,8 +8,7 @@ import dayjs from "dayjs";
  * @returns 格式化的日期字符串
  */
 export const timestampToDate = function (timestamp: number): string {
-  const currentDate = dayjs(new Date(timestamp))
-  return currentDate.format("YYYY-MM-DD HH:mm:ss")
+  return moment(timestamp).format("YYYY-MM-DD HH:mm:ss")
 }
 
 /**
@@ -24,8 +22,7 @@ export const stringToDate = function (date: string): string {
   if (!date || date == "") {
     date = "1970-01-01 00:00:00"
   }
-  const currentDate = dayjs(date)
-  return currentDate.format("YYYY-MM-DD HH:mm:ss")
+  return moment(date).format("YYYY-MM-DD HH:mm:ss")
 }
 
 /**
