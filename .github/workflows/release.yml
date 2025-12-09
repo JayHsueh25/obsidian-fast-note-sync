@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # 获取所有历史记录，为了确保能获取到 git tags
           fetch-depth: 0 # Required to fetch tags
@@ -26,10 +26,9 @@ jobs:
       - uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: ".node-version"
-          cache: "pnpm"
 
       # 核心逻辑：检查版本号变更
       - name: Check Version
@@ -86,6 +85,7 @@ jobs:
         # 只有在 check_version 步骤输出 should_release 为 true 时才执行
         if: steps.check_version.outputs.should_release == 'true'
         run: |
+          pnpm install
           pnpm run build
           mkdir ${{ env.NAME }}
           cp main.js manifest.json styles.css ${{ env.NAME }}
