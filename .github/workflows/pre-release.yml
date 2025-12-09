@@ -25,9 +25,6 @@ jobs:
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -74,7 +71,6 @@ jobs:
         id: build
         if: steps.check_version.outputs.should_release == 'true'
         run: |
-          pnpm install
           pnpm run build
           mkdir ${{ env.NAME }}
           cp main.js manifest.json styles.css ${{ env.NAME }}
