@@ -1,5 +1,7 @@
 [简体中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-CN.md) / [English](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md) / [日本語](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ja.md) / [한국어](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ko.md) / [繁體中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-TW.md)
 
+ご不明な点がございましたら、 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new) を作成するか、Telegram 交流グループで助けを求めてください: [https://t.me/obsidian_users](https://t.me/obsidian_users)
+
 
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
@@ -29,13 +31,13 @@
 
 ## ✨ プラグイン機能
 
-- **極限までシンプルな設定**：煩雑な設定は不要。リモートサービスの設定を貼り付けるだけで、すぐにご利用いただけます。
+- **超シンプルな設定**：煩雑な設定は不要。リモートサービスの設定を貼り付けるだけで、すぐにご利用いただけます。
 - **ノートのリアルタイム同期**：Vault（保管庫）内のすべてのノートの作成、更新、削除を自動的に監視し、同期します。
 - **添付ファイルの完全サポート**：画像、動画、音声などの設定ファイル以外のファイルもリアルタイムで同期。
     > ⚠️ **注意**：v1.0+、サーバー v0.9+ が必要です。添付ファイルのサイズにご注意ください。大きなファイルは同期遅延の原因となる場合があります。
-- **設定の同期**：設定同期機能を提供し、複数デバイス間での設定同期をサポート。手動で各デバイスに設定ファイルをコピーする手間から解放されます。
-    > ⚠️ **注意**：v1.4+、サーバー v1.0+ が必要です。現在テスト段階のため、注意してご使用ください。
-- **サーバーバージョンの確認**：サーバーのバージョン情報を表示し、サーバーの状態を簡単に把握できます。
+- **設定の同期**：設定同期機能を提供し、複数デバイス間での設定同期をサポート。手動で各デバイスに設定ファイルをコピーする手間を省きます。
+    > ⚠️ **注意**：v1.4+、サーバー v1.0+ が必要です。現在はテスト段階のため、慎重にご使用ください。
+- **サーバーバージョンの表示**：サーバーのバージョン情報を表示し、サーバーの状態を簡単に把握できます。
 - **マルチデバイス同期**：Mac、Windows、Android、iOS などのプラットフォームに対応。
 - **ノート履歴**：ノート履歴機能を提供。プラグインまたはサーバーの WebGui から、ノートのすべての編集履歴を確認できます。変更詳細の確認や履歴バージョンのコピーが可能です。
 
@@ -52,10 +54,10 @@
 
 ## 💰 価格
 
-- このプラグインが有用だと感じ、開発の継続を支援したい場合は、以下の方法でサポートをお願いいたします。：
+- このプラグインが有用だと感じ、開発の継続を支援したい場合は、以下の方法でサポートをお願いいたします：
 
-  | Ko-fi *中国国外*  |  | 微信 (WeChat) 募金 *中国国内* |
-  | --- | ---| --- |
+  | Ko-fi *中国国外*                                                                                                     |     | 微信 (WeChat) 募金 *中国国内*                                      |
+  |----------------------------------------------------------------------------------------------------------------------|-----|--------------------------------------------------------------------|
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | または | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 ## 🚀 クイックスタート

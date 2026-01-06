@@ -1,5 +1,7 @@
 [简体中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-CN.md) / [English](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md) / [日本語](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ja.md) / [한국어](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ko.md) / [繁體中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-TW.md)
 
+有問題請新建 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new) , 或加入電報交流群尋求幫助: [https://t.me/obsidian_users](https://t.me/obsidian_users)
+
 
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
@@ -54,8 +56,8 @@
 
 - 如果覺得這個插件很有用，並且想要它繼續開發，請通過以下方式支持我:
 
-  | Ko-fi *非中國地區*  |  | 微信掃碼打賞 *中國地區* |
-  | --- | ---| --- |
+  | Ko-fi *非中國地區*                                                                                                   |    | 微信掃碼打賞 *中國地區*                                            |
+  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 ## 🚀 快速開始
@@ -63,7 +65,7 @@
 1. 安裝插件 (二選一)
    - **官方商店**: <s>打開 Obsidian 社區插件市場, 搜索 **Fast Note Sync** 安裝</s>
         > ⚠️ 插件尚未上架官方商店, 無法搜索, 請手動安裝
-   - **手动安装**: 访问 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下载安装包, 解压到 Obsidian 插件目录下 **.obsidian/plugins**
+   - **手動安裝**: 訪問 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下載安裝包, 解压到 Obsidian 插件目錄下 **.obsidian/plugins**
 2. 打開插件配置項，點擊 **粘貼遠端配置** 按鈕，將遠端服務配置粘貼到輸入框中。
 
 

@@ -1,5 +1,7 @@
 [简体中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-CN.md) / [English](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md) / [日本語](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ja.md) / [한국어](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ko.md) / [繁體中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-TW.md)
 
+궁금한 점이 있으시면 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new)를 생성하거나 Telegram 커뮤니티 그룹에 가입하여 도움을 받으세요: [https://t.me/obsidian_users](https://t.me/obsidian_users)
+
 
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
@@ -15,7 +17,7 @@
 <p align="center">
   <strong>빠르고 안정적이며 효율적인, 어디서나 배포 가능한 Obsidian 노트 동기화 및 백업 플러그인</strong>
   <br>
-  <em>개인 서버 배포를 지원하며, Obsidian 사용자를 위해 방해 없는 부드러운 다중 기기 실시간 노트 동기화 및 백업을 제공합니다. Mac, Windows, Android, iOS 등의 플랫폼과 다국어를 지원합니다.</em>
+  <em>개인 서버 배포를 지원하며, Obsidian 사용자를 위해 방해 없는 부드러운 다중 기기 실시간 노트 동기화 및 백업을 제공합니다. Mac, Windows, Android, iOS 등 다양한 플랫폼과 다국어를 지원합니다.</em>
 </p>
 
 <p align="center">
@@ -54,8 +56,8 @@
 
 - 이 플러그인이 유용하다고 생각하시고 지속적인 개발을 지원하고 싶으시다면, 아래의 방법으로 후원해 주세요:
 
-  | Ko-fi *중국 외 지역*  |  | 위챗(WeChat) 후원 *중국 지역* |
-  | --- | ---| --- |
+  | Ko-fi *중국 외 지역*                                                                                                      |    | 위챗(WeChat) 후원 *중국 지역*                                              |
+  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 또는 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 ## 🚀 빠른 시작
