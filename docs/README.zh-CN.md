@@ -84,7 +84,7 @@
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 - 已支持名单：
-  - https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md
+  - ../../../../../haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md
 
 
 ## 🚀 快速开始
