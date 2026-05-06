@@ -26,7 +26,7 @@
   "setting.remote.api_token": "f824f46dd4d9e4731eb29d4a23311788",
   "setting.remote.api_token_desc": "cd56a2eccd5db4a83a6773f5d90dbae1",
   "setting.remote.api_token_placeholder": "5f8e78e2c3899156c6c7937bfc9c3ab3",
-  "setting.remote.vault_name": "708a29cd1737fe16b318547d2dcbedf8",
+  "setting.remote.vault_name": "b3b5e85bc87d237f195b07586e728275",
   "setting.remote.client_name": "9e37c58a17770160a6ade8ba6fec253d",
   "setting.remote.client_name_desc": "aee619eee427bfd27a3b1d1dca950ce6",
   "setting.remote.client_name_placeholder": "4c4252fc140c67befdbcbfe82bcc15fd",
@@ -360,5 +360,10 @@
   "ui.system.wsNoClients": "e50d05f9ca53466c093daeb3607327e1",
   "ui.system.wsStartTime": "6c1c22e1a553f6465dc9f9face914abc",
   "setting.remote.auto_redirect": "742083ab2ad4576a1c55974424011311",
-  "setting.remote.auto_redirect_desc": "db39da76c03b62e896368330e6127b2a"
+  "setting.remote.auto_redirect_desc": "db39da76c03b62e896368330e6127b2a",
+  "setting.sync.mobile_blur_pause": "8cdae3fbcc41cfc006b713729086b701",
+  "setting.sync.mobile_blur_pause_desc": "9d48399760041db1222e8b7f9fa0165b",
+  "setting.general.mobile_toast_top": "7efe9f9427c93c8c3a2bac09c13bc24b",
+  "setting.general.mobile_toast_top_desc": "db35fd47a41f91e6fbcc572280a6fa47",
+  "setting.general.mobile_toast_top_test": "db06c78d1e24cf708a14ce81c9b617ec"
 }

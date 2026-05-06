@@ -72,6 +72,8 @@ export default {
   "setting.sync.readonly_sync_desc": "When enabled, this device will only receive updates from the server and will not upload any local changes. <b>Priority is higher than Manual Sync Mode.</b>",
   "setting.sync.auto_pause_minimized": "Auto Pause Sync When Minimized",
   "setting.sync.auto_pause_minimized_desc": "When enabled, automatic sync triggered by local file changes will be paused when the Obsidian window is minimized. Disabled by default.",
+  "setting.sync.mobile_blur_pause": "Delay Sync Pause on Mobile Focus Loss",
+  "setting.sync.mobile_blur_pause_desc": "When enabled, Obsidian on mobile will wait 30 seconds before pausing sync after losing focus (e.g., switching apps), to avoid frequent connection toggling. When disabled, sync will not automatically pause due to focus loss.",
 
   "setting.sync.exclude": "Sync Exclusion (Notes/Attachments/Config)",
   "setting.sync.exclude_placeholder": "Path or regex, one per line",
@@ -90,7 +92,7 @@ export default {
   "setting.general.show_notice": "Show Notification Messages",
   "setting.general.show_notice_desc": "Disable all success operation notification messages; error messages will still be displayed normally.",
   "setting.general.mobile_toast_top": "Notification Position",
-  "setting.general.mobile_toast_top_desc": "Controls the distance from the top of the screen for the mobile notification toast (px). Default: phone 110, tablet 126.",
+  "setting.general.mobile_toast_top_desc": "Controls the distance (in px) of the mobile notification toast from the top of the screen. Default: 110 for phones, 126 for tablets.",
   "setting.general.mobile_toast_top_test": "Test",
   "setting.general.show_share_icon": "Show Share Icon",
   "setting.general.show_share_icon_desc": "When enabled, icons for shared notes will be displayed in the <b>native file manager</b> and the third-party plugin <b>Notebook Navigator</b>.",

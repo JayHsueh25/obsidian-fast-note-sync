@@ -35,7 +35,7 @@ export default {
   "setting.remote.api_token": "远端服务令牌",
   "setting.remote.api_token_desc": "用于远端服务的访问授权令牌",
   "setting.remote.api_token_placeholder": "输入您的 API 访问令牌",
-  "setting.remote.vault_name": "远端仓库名",
+  "setting.remote.vault_name": "远端笔记库名",
   "setting.remote.client_name": "客户端名称",
   "setting.remote.client_name_desc": "为当前客户端设置一个自定义名称，用于多端同步时识别设备。",
   "setting.remote.client_name_placeholder": "输入客户端名称",
@@ -72,6 +72,8 @@ export default {
   "setting.sync.readonly_sync_desc": "开启后，本设备仅接收服务端更新，不上传任何本地修改。<b>优先级高于手动同步模式。</b>",
   "setting.sync.auto_pause_minimized": "最小化自动暂停同步",
   "setting.sync.auto_pause_minimized_desc": "开启后，当 Obsidian 窗口最小化时，将自动暂停本地文件变更引发的自动同步，默认关闭。",
+  "setting.sync.mobile_blur_pause": "手机端失焦延迟暂停同步",
+  "setting.sync.mobile_blur_pause_desc": "开启后，手机端 Obsidian 失焦（如切换 App）时将等待 30 秒再暂停同步，避免频繁开关连接。关闭后将不再因失焦而自动暂停。",
 
   "setting.sync.exclude": "同步排除 (笔记/附件/配置)",
   "setting.sync.exclude_placeholder": "路径或正则，每行一个",

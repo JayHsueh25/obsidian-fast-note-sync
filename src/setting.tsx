@@ -86,6 +86,8 @@ export interface PluginSettings {
   autoRedirectEnabled: boolean
   /** 移动端消息通知距顶距离（px）/ Mobile toast top offset (px) */
   mobileToastTop: number
+  /** 手机端失焦延迟暂停同步 / Mobile blur pause delay */
+  mobileBlurPauseEnabled: boolean
 }
 
 /**
@@ -137,6 +139,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   autoRedirectEnabled: false,
   // 手机 110，平板 126，与 CSS 硬编码值一致 / Phone 110, tablet 126, matches CSS defaults
   mobileToastTop: Platform.isTablet ? 126 : 110,
+  mobileBlurPauseEnabled: true,
 }
 
 export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG"
@@ -1252,6 +1255,16 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_pause_minimized_desc"))
+
+    new Setting(set).setName($("setting.sync.mobile_blur_pause")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.mobileBlurPauseEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.mobileBlurPauseEnabled) {
+          this.plugin.settings.mobileBlurPauseEnabled = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.mobile_blur_pause_desc"))
 
     this.addRuleSetting(
       set,

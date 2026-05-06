@@ -15,6 +15,7 @@ export class EventManager {
   private rawEventTimers: Map<string, any> = new Map()
   //保存待处理的重命名文件的路径，用于跳过同时触发的 modify 事件
   private pendingRenamePaths: Set<string> = new Set()
+  private blurTimer: any | null = null
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
@@ -67,6 +68,10 @@ export class EventManager {
     this.rawEventTimers.forEach((timer) => clearTimeout(timer))
     this.rawEventTimers.clear()
     this.pendingRenamePaths.clear()
+    if (this.blurTimer) {
+      clearTimeout(this.blurTimer)
+      this.blurTimer = null
+    }
   }
 
   private onOnline = () => {
@@ -86,14 +91,28 @@ export class EventManager {
   private onWindowFocus = () => {
     if (Platform.isMobile) {
       dump("Obsidian Mobile Focus")
+      if (this.blurTimer) {
+        clearTimeout(this.blurTimer)
+        this.blurTimer = null
+        dump("Obsidian Mobile Focus (Timer cancelled)")
+      }
+      dump("Obsidian Mobile Plugin Focus (Enable)")
       this.plugin.enableWatch()
     }
   }
 
   private onWindowBlur = () => {
+    dump("Obsidian Mobile Blur")
     if (Platform.isMobile) {
-      dump("Obsidian Mobile Blur")
-      this.plugin.disableWatch()
+      if (this.plugin.settings.mobileBlurPauseEnabled) {
+        dump("Obsidian Mobile Plugin Blur (Waiting 30s)")
+        if (this.blurTimer) clearTimeout(this.blurTimer)
+        this.blurTimer = window.setTimeout(() => {
+          dump("Obsidian Mobile Blur (Executing)")
+          this.plugin.disableWatch()
+          this.blurTimer = null
+        }, 30000)
+      }
     }
   }
 
