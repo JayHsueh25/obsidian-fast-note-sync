@@ -454,7 +454,8 @@ async function computeRollingHash(view: Uint8Array): Promise<string> {
 export const MAX_IN_MEMORY_FILE_SYNC_BYTES = 128 * 1024 * 1024
 
 
-export const isLargeBinarySyncRisk = function (size: number): boolean {
+export const isLargeBinarySyncRisk = function (size: number, plugin: FastSync): boolean {
+  if (plugin.settings.binarySyncLimitEnabled === false) return false
   return typeof size === "number" && size > MAX_IN_MEMORY_FILE_SYNC_BYTES
 }
 

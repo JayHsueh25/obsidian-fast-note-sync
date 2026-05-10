@@ -55,6 +55,8 @@ export default {
   "setting.sync.title": "동기화 제어",
   "setting.sync.auto_note": "자동 동기화",
   "setting.sync.auto_note_desc": "활성화하면 노트 라이브러리의 노트, 이미지, 다양한 첨부파일 및 파일 디렉토리를 동기화합니다.",
+  "setting.sync.binary_limit": "첨부 파일 동기화 크기 제한",
+  "setting.sync.binary_limit_desc": "활성화 시 128MB 이상의 첨부 파일은 동기화되지 않으며, 모바일 기기의 OOM 위험을 줄입니다. 비활성화 시에는 크기 제한이 적용되지 않습니다.",
   "setting.sync.auto_config": "설정 자동 동기화",
   "setting.sync.auto_config_desc": "활성화하면 <b>.obsidian</b> 디렉토리의 핵심 설정, 플러그인, 외관, 테마 등의 설정을 동기화합니다. 처음 활성화할 경우 서버 설정이 로컬 설정을 덮어씁니다.",
   "setting.sync.pdf_state": "PDF 상태 동기화",

@@ -86,7 +86,7 @@ export class FileHashManager {
             content = null; // 显式释放引用 (Explicitly release reference)
           } else {
 
-            if (isLargeBinarySyncRisk(file.stat.size)) {
+            if (isLargeBinarySyncRisk(file.stat.size, this.plugin)) {
               dump(`FileHashManager: skip large binary hash (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
               continue;
             }

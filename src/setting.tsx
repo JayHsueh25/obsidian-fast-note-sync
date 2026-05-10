@@ -88,6 +88,8 @@ export interface PluginSettings {
   mobileToastTop: number
   /** 手机端失焦延迟暂停同步 / Mobile blur pause delay */
   mobileBlurPauseEnabled: boolean
+  /** 是否启用 128MB 二进制文件同步限制 / Enable 128MB binary sync limit */
+  binarySyncLimitEnabled: boolean
 }
 
 /**
@@ -140,6 +142,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   // 手机 110，平板 126，与 CSS 硬编码值一致 / Phone 110, tablet 126, matches CSS defaults
   mobileToastTop: Platform.isTablet ? 126 : 110,
   mobileBlurPauseEnabled: true,
+  binarySyncLimitEnabled: true,
 }
 
 export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG"
@@ -1176,6 +1179,16 @@ export class SettingTab extends PluginSettingTab {
             }).open()
           })
       })
+
+    new Setting(set).setName($("setting.sync.binary_limit")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.binarySyncLimitEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.binarySyncLimitEnabled) {
+          this.plugin.settings.binarySyncLimitEnabled = value
+          await this.plugin.saveSettings("binarySyncLimitEnabled")
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.binary_limit_desc"))
 
     new Setting(set).setName($("setting.sync.pdf_state")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {

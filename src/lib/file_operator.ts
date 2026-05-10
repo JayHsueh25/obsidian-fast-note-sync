@@ -64,7 +64,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
-  if (isLargeBinarySyncRisk(file.stat.size)) {
+  if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
     dump(`Skip file modify for large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size)
     showSyncNotice(`Fast Note Sync skipped large file: ${file.path}`, 5000)
     return
@@ -254,7 +254,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
           // 尝试新路径哈希缓存 (Try new path cache)
           contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
           if (contentHash == null) {
-            if (isLargeBinarySyncRisk(file.stat.size)) {
+            if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
               dump(`Skip rename hash for large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size)
               return
             }
@@ -305,7 +305,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     plugin.fileSyncTasks.completed++
     return
   }
-  if (isLargeBinarySyncRisk(file.stat.size)) {
+  if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
     dump(`Skip file upload for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, file.stat.size)
     showSyncNotice(`Fast Note Sync skipped large file upload: ${data.path}`, 5000)
     plugin.fileSyncTasks.completed++
@@ -536,7 +536,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     plugin.fileSyncTasks.completed++;
     return
   }
-  if (isLargeBinarySyncRisk(data.size)) {
+  if (isLargeBinarySyncRisk(data.size, plugin)) {
     dump(`Skip file download for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, data.size)
     showSyncNotice(`Fast Note Sync skipped large file download: ${data.path}`, 5000)
     plugin.fileSyncTasks.completed++;
@@ -697,7 +697,7 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
   await plugin.lockManager.withLock(normalizedPath, async () => {
     const file = plugin.app.vault.getFileByPath(normalizedPath)
     if (file) {
-      if (isLargeBinarySyncRisk(file.stat.size)) {
+      if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
         dump(`Skip binary mtime rewrite for large attachment (${describeBinarySyncLimit()} limit): ${normalizedPath}`, file.stat.size)
         plugin.lastSyncMtime.set(data.path, data.mtime)
         if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
@@ -962,7 +962,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
         if (data.mtime) {
           const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
           if (renamedFile instanceof TFile) {
-            if (isLargeBinarySyncRisk(renamedFile.stat.size)) {
+            if (isLargeBinarySyncRisk(renamedFile.stat.size, plugin)) {
               dump(`Skip renamed binary mtime rewrite for large attachment (${describeBinarySyncLimit()} limit): ${normalizedNewPath}`, renamedFile.stat.size)
             } else {
               const content = await plugin.app.vault.readBinary(renamedFile)
@@ -992,7 +992,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
       if (targetFile instanceof TFile) {
         const sizeMatch = data.size === undefined || targetFile.stat.size === data.size
         if (sizeMatch) {
-          if (isLargeBinarySyncRisk(targetFile.stat.size)) {
+          if (isLargeBinarySyncRisk(targetFile.stat.size, plugin)) {
             dump(`Skip rename target hash for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, targetFile.stat.size)
             plugin.fileSyncTasks.completed++
             return
@@ -1030,7 +1030,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
 const handleFileChunkDownloadComplete = async function (session: FileDownloadSession, plugin: FastSync) {
   const slotKey = `download_${session.path}`;
   try {
-    if (isLargeBinarySyncRisk(session.size)) {
+    if (isLargeBinarySyncRisk(session.size, plugin)) {
       dump(`Skip assembling large downloaded attachment (${describeBinarySyncLimit()} limit): ${session.path}`, session.size)
       plugin.fileDownloadSessions.delete(session.sessionId)
       if (session.tempDir) await clearTempChunksDir(plugin, session.sessionId)

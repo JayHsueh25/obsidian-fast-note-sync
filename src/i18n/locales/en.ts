@@ -55,6 +55,8 @@ export default {
   "setting.sync.title": "Sync Control",
   "setting.sync.auto_note": "Auto Sync",
   "setting.sync.auto_note_desc": "When enabled, notes, images, various attachments, and file directories under the vault will be synced.",
+  "setting.sync.binary_limit": "Attachment Sync Size Limit",
+  "setting.sync.binary_limit_desc": "When enabled, attachments larger than 128MB will not be synced to reduce the risk of mobile OOM errors. When disabled, there is no size limit.",
   "setting.sync.auto_config": "Auto Sync Config",
   "setting.sync.auto_config_desc": "When enabled, core configurations, plugins, appearance, themes, and other settings under the <b>.obsidian</b> directory will be synced. Upon first enablement, server-side configurations will overwrite local ones.",
   "setting.sync.pdf_state": "PDF State Sync",

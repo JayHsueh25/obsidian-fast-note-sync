@@ -55,6 +55,8 @@ export default {
   "setting.sync.title": "同期制御",
   "setting.sync.auto_note": "自動同期",
   "setting.sync.auto_note_desc": "有効にすると、ノートライブラリ内のノート、画像、各種添付ファイルおよびファイルディレクトリが同期されます。",
+  "setting.sync.binary_limit": "添付ファイルの同期サイズ制限",
+  "setting.sync.binary_limit_desc": "有効にすると、128MB を超える添付ファイルは同期されなくなります。これによりモバイル端末の OOM 発生リスクを低減します。無効にすると、サイズ制限は適用されません。",
   "setting.sync.auto_config": "設定の自動同期",
   "setting.sync.auto_config_desc": "有効にすると、<b>.obsidian</b> ディレクトリ内のコア設定、プラグイン、外観、テーマなどの設定が同期されます。初めて有効にした場合、サーバーの設定がローカル設定を上書きします。",
   "setting.sync.pdf_state": "PDF 状態の同期",

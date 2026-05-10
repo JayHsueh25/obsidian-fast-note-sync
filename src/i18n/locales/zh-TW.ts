@@ -55,6 +55,8 @@ export default {
   "setting.sync.title": "同步控制",
   "setting.sync.auto_note": "自動同步",
   "setting.sync.auto_note_desc": "開啟後，將同步筆記庫下的筆記、圖片和各類附件以及檔案目錄。",
+  "setting.sync.binary_limit": "附件同步大小限制",
+  "setting.sync.binary_limit_desc": "開啟後，將不再同步大於 128MB 的附件，以降低行動裝置 OOM 風險。關閉後則不限制大小。",
   "setting.sync.auto_config": "配置自動同步",
   "setting.sync.auto_config_desc": "開啟後，將同步 <b>.obsidian</b> 目錄下的核心配置、外掛、外觀、主題等配置，首次開啟將會使用服務端配置覆蓋本地配置。",
   "setting.sync.pdf_state": "PDF 狀態同步",

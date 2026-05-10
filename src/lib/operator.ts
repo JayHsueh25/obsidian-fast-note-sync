@@ -504,7 +504,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           notes.push(item);
         } else {
 
-          if (isLargeBinarySyncRisk(file.stat.size)) {
+          if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
             dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
             continue;
           }
@@ -630,7 +630,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const fullPath = normalizePath(path);
     const stat = await plugin.app.vault.adapter.stat(fullPath);
     if (!stat) continue;
-    if (isLargeBinarySyncRisk(stat.size)) {
+    if (isLargeBinarySyncRisk(stat.size, plugin)) {
       dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
       continue;
     }
