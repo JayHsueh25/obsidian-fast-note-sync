@@ -1,10 +1,10 @@
 {
-  "name": "Fast Note Sync",
-  "version": "1.25.12",
+  "name": "fast-note-sync",
+  "version": "1.25.13",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "main": "main.js",
   "scripts": {
-    "dev": "npx concurrently \"pnpm run devcss\" \"pnpm run devts\"",
+    "dev": "npx npm-run-all --parallel  devts devcss",
     "devts": "node esbuild.config.mjs",
     "devcss": "sass --watch src/styles.scss styles.css && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
@@ -17,15 +17,15 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.6.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.59.1",
-    "@typescript-eslint/parser": "^8.59.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
     "builtin-modules": "^4.0.0",
-    "concurrently": "^9.2.1",
     "esbuild": "^0.24.2",
     "eslint": "^9.39.4",
+    "npm-run-all": "^4.1.5",
     "obsidian": "^1.12.3",
     "sass": "^1.99.0",
     "tslib": "^2.8.1",
@@ -37,8 +37,8 @@
     "file-type": "^19.6.0",
     "jszip": "^3.10.1",
     "pinyin-pro": "^3.28.1",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
 }
