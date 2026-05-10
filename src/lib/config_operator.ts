@@ -229,17 +229,17 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
     try {
         const exists = await plugin.app.vault.adapter.exists(filePath);
-            if (exists) {
-                const stat = await plugin.app.vault.adapter.stat(filePath);
-                if (stat) {
-                    contentHash = await hashFileAsync(plugin.app, filePath);
-                    const contentBufRead = await plugin.app.vault.adapter.readBinary(filePath);
-                    contentStr = new TextDecoder().decode(contentBufRead);
-                    contentBuf = contentBufRead; // 保持兼容性逻辑
-                    mtime = stat.mtime;
-                    ctime = getSafeCtime(stat);
-                }
+        if (exists) {
+            const stat = await plugin.app.vault.adapter.stat(filePath);
+            if (stat) {
+                contentHash = await hashFileAsync(plugin.app, filePath);
+                const contentBufRead = await plugin.app.vault.adapter.readBinary(filePath);
+                contentStr = new TextDecoder().decode(contentBufRead);
+                contentBuf = contentBufRead; // 保持兼容性逻辑
+                mtime = stat.mtime;
+                ctime = getSafeCtime(stat);
             }
+        }
     } catch (error) {
         console.error("读取配置文件出错:", error);
         return
@@ -448,7 +448,7 @@ export const configAllPaths = async function (configDirs: string[], plugin: Fast
         }
     }
 
-    console.log(configDirs)
+    dump(configDirs)
     for (const configDir of configDirs) {
         try {
             // 解析目录名称，用于判断是否为自定义目录

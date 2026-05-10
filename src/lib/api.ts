@@ -89,7 +89,7 @@ export class HttpApiService {
                 redirect: 'follow',
             });
             if (res.url) {
-                console.log("probeApiRedirect", res.url);
+                dump("probeApiRedirect", res.url);
                 const healthIndex = res.url.indexOf("/api/health");
                 if (healthIndex !== -1) {
                     const newBase = res.url.substring(0, healthIndex).replace(/\/+$/, "");

@@ -468,13 +468,13 @@ export const logMemorySnapshot = function (label: string): void {
   if (!isLogEnabled) return
   const memory = (performance as any)?.memory
   if (memory) {
-    console.log("[FastNoteSync][Memory]", label, {
+    dump("[FastNoteSync][Memory]", label, {
       used: formatFileSize(memory.usedJSHeapSize),
       total: formatFileSize(memory.totalJSHeapSize),
       limit: formatFileSize(memory.jsHeapSizeLimit),
     })
   } else {
-    console.log("[FastNoteSync][Memory]", label)
+    dump("[FastNoteSync][Memory]", label)
   }
 }
 
