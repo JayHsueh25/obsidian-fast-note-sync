@@ -4,6 +4,8 @@
 
 중국 본토 지역의 경우, 텐센트 `cnb.cool` 미러 저장소 사용을 권장합니다: [https://cnb.cool/haierkeys/obsidian-fast-note-sync](https://cnb.cool/haierkeys/obsidian-fast-note-sync)
 
+
+
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
 <p align="center">
@@ -12,6 +14,8 @@
     <a href="https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/LICENSE"><img src="https://img.shields.io/github/license/haierkeys/obsidian-fast-note-sync?style=flat-square" alt="license"></a>
     <img src="https://img.shields.io/badge/Language-TypeScript-00ADD8?style=flat-square" alt="TypeScript">
 </p>
+
+
 
 <p align="center">
   <strong>빠르고 안정적이며 효율적인, 어디서나 배포 가능한 Obsidian 노트 동기화 및 백업 플러그인</strong>
@@ -80,19 +84,22 @@
   | [<img src="/docs/images/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="/docs/images/wxds.png" height="150"> |
 
 - 후원자 명단:
-  - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
-  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md (cnb.cool 미러)</a>
+  - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.ko.md">Support.ko.md</a>
+  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.ko.md">Support.ko.md (cnb.cool 미러)</a>
 
 
 ## 🚀 시작하기
 
-1. 플러그인 설치 (세 가지 방법 중 선택)
-   - **권장**: **BRAT**를 사용하여 설치(모바일 설치 지원): Obsidian 플러그인 커뮤니티에서 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 플러그인을 검색하여 설치한 후, 플러그인 설정 화면으로 들어가 **Add plugin**을 클릭하고 https://github.com/haierkeys/obsidian-fast-note-sync 를 붙여넣습니다.
-   - **공식 스토어**: <s>Obsidian 플러그인 커뮤니티 시장을 열고 **Fast Note Sync**를 검색하여 설치합니다</s>
-        > ⚠️ 플러그인이 아직 공식 스토어에 등록되지 않아 검색이 불가능합니다. 수동으로 설치해 주세요.
-   - **수동 설치**: https://github.com/haierkeys/obsidian-fast-note-sync/releases 에 접속하여 설치 패키지를 다운로드하고 Obsidian 플러그인 디렉터리 **.obsidian/plugins**에 압축을 풉니다.
-2. 플러그인 설정 항목을 열고, **Paste Remote Config**(원격 구성 붙여넣기) 버튼을 클릭하여 입력란에 원격 서비스 구성을 붙여넣습니다.
+**첫 번째 단계: 플러그인 받기**
 
+* **스토어 검색:** Obsidian **설정** > **커뮤니티 플러그인** > **탐색**에서 `Fast Note Sync`를 검색하여 설치합니다. *(참고: 스토어에 없는 경우 수동 설치를 선택하세요)*
+* **수동 다운로드:** [GitHub 릴리스 페이지](https://github.com/haierkeys/obsidian-fast-note-sync/releases)에서 `main.js`, `styles.css`, `manifest.json` 등의 파일을 다운로드하여 `.obsidian/plugins/fast-note-sync` 폴더에 넣습니다.
+
+**두 번째 단계: 동기화 승인**
+
+1. 구축한 **[Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service)** 웹 인터페이스에 접속합니다.
+2. 왼쪽 내비게이션 바에서 **「노트 보관소」**를 선택합니다.
+3. **「Obsidian 원클릭 승인」**을 클릭하면 시스템이 자동으로 Obsidian을 호출하고 승인 정보 전달을 완료합니다. 물론 수동으로 승인 정보를 플러그인에 복사할 수도 있습니다.
 
 ## 📦 서버 배포
 

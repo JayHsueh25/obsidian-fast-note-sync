@@ -90,13 +90,16 @@
 
 ## 🚀 快速开始
 
-1. 安装插件 (三选一)
-   - **推荐** 使用 **BRAT** 安装 ( 支持手机安装 ): 在 Obsidian 插件社区市场, 搜索并安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 进入插件设置界面, 点击 **Add plugin** 并粘贴 https://github.com/haierkeys/obsidian-fast-note-sync
-   - **官方商店**: <s>打开 Obsidian 社区插件市场, 搜索 **Fast Note Sync** 安装</s>
-        > ⚠️ 插件尚未上架官方商店,无法搜索, 请手动安装
-   - **手动安装**: 访问 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下载安装包, 解压到 Obsidian 插件目录下 **.obsidian/plugin**
-2. 打开插件配置项，点击 **粘贴远端配置** 按钮，将远端服务配置粘贴到输入框中。
+**第一步：获取插件**
 
+* **商店搜索：** 打开 Obsidian **设置** > **社区插件** > **浏览**，搜索 `Fast Note Sync` 进行安装。 *(注：若商店未上架，请选择手动安装)*
+* **手动下载：** 从 [GitHub 发布页](https://github.com/haierkeys/obsidian-fast-note-sync/releases) 获取 `main.js`, `styles.css`, `manifest.json` 等文件，放入 `.obsidian/plugins/fast-note-sync` 文件夹中。
+
+**第二步：授权同步**
+
+1. 访问您搭建的 **[Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service)** Web 界面。
+2. 在左侧导航栏中选择 **「笔记库」**。
+3. 点击 **「一键授权 Obsidian」**，系统会自动唤起 Obsidian 并自动完成传递授权信息，当然你也可以手动复制授权到插件内。
 
 ## 📦 服务端部署
 
