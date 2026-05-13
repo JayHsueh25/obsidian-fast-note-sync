@@ -177,4 +177,4 @@ jobs:
             ) &
           done
           wait
-          echo "🎉 Sync to CNB complete!"
+          echo "🎉 Sync to CNB complete!1"
