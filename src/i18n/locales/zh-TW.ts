@@ -374,6 +374,7 @@ export default {
   "ui.recycle_bin.select_all": "全選",
   "ui.share.title": "分享筆記",
   "ui.share.checking": "正在檢查分享狀態...",
+  "ui.share.not_shared_yet": "該筆記尚未開啟分享",
   "ui.share.create": "開啟分享",
   "ui.share.success": "分享成功",
   "ui.share.shortLinkCreate": "生成短連結",

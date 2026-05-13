@@ -679,10 +679,9 @@ export function showSyncNotice(message: string, duration: number = 2500): SyncNo
   const existing = document.querySelector(".fns-mobile-toast")
   if (existing) existing.remove()
 
-  const toast = document.createElement("div")
+  const toast = document.body.createDiv()
   toast.className = "fns-mobile-toast"
   toast.textContent = message
-  document.body.appendChild(toast)
 
   let hideTimeout: any = null
 

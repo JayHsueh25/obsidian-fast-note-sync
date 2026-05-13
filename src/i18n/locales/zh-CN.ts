@@ -374,6 +374,7 @@ export default {
   "ui.recycle_bin.select_all": "全选",
   "ui.share.title": "分享笔记",
   "ui.share.checking": "正在检查分享状态...",
+  "ui.share.not_shared_yet": "该笔记尚未开启分享",
   "ui.share.create": "开启分享",
   "ui.share.success": "分享成功",
   "ui.share.shortLinkCreate": "生成短链接",

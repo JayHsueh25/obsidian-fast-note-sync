@@ -58,7 +58,10 @@ export const localeMap: { [k: string]: Partial<typeof en> } = {
     "zh-tw": zhTW,
 };
 
-const locale = localeMap[moment.locale()] as Partial<LangMap> | undefined;
+// Use a string variable first to avoid computed property name resolution warnings
+// 先用字符串变量缓存，避免静态分析无法解析计算属性名
+const _localeKey: string = moment.locale();
+const locale = localeMap[_localeKey] as Partial<LangMap> | undefined;
 
 
 function getValueFromPath(root: Record<string, unknown>, path: string): unknown {

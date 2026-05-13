@@ -133,7 +133,6 @@ jobs:
             main.js
             manifest.json
             styles.css
-            changelog.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -192,7 +191,7 @@ jobs:
           echo "::endgroup::"
 
           # 准备上传列表
-          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css" "changelog.txt")
+          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css")
 
           for FILE_NAME in "${FILES[@]}"; do
             (

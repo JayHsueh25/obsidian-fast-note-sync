@@ -86,27 +86,45 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
 
             setUpgradeStatus($("ui.version.waiting_server"));
 
-            // 3. 轮询健康检查
-            const pollInterval = window.setInterval(async () => {
+            // 3. Poll health check using recursive setTimeout (not setInterval)
+            // 使用递归 setTimeout 进行健康检查轮询（而非 setInterval）
+            let pollTimeoutId: number | null = null;
+            let pollStopped = false;
+
+            const stopPolling = () => {
+              pollStopped = true;
+              if (pollTimeoutId !== null) {
+                window.clearTimeout(pollTimeoutId);
+                pollTimeoutId = null;
+              }
+            };
+
+            const scheduleNextPoll = () => {
+              if (pollStopped) return;
+              pollTimeoutId = window.setTimeout(async () => {
+                if (pollStopped) return;
                 setPollingCount(prev => prev + 1);
                 const isAlive = await plugin.api.checkHealth();
                 if (isAlive) {
-                    window.clearInterval(pollInterval);
-
-                    // 4. 重连并完成
-                    plugin.websocket.register();
-                    showSyncNotice($("ui.version.upgrade_success"));
-                    closeModal();
+                  stopPolling();
+                  // 4. 重连并完成 / Reconnect and complete
+                  plugin.websocket.register();
+                  showSyncNotice($("ui.version.upgrade_success"));
+                  closeModal();
+                } else {
+                  scheduleNextPoll();
                 }
-            }, 2000);
+              }, 2000);
+            };
 
-            // 设置超时保护 (如 2分钟)
-            setTimeout(() => {
-                window.clearInterval(pollInterval);
-                if (isUpgrading) {
-                    setIsUpgrading(false);
-                    showSyncNotice("Upgrade timeout or failed to detect server restart.");
-                }
+            scheduleNextPoll();
+
+            // 超时保护 (如 2分钟) / Timeout guard (2 minutes)
+            window.setTimeout(() => {
+              if (pollStopped) return;
+              stopPolling();
+              setIsUpgrading(false);
+              showSyncNotice("Upgrade timeout or failed to detect server restart.");
             }, 120000);
 
         } catch (e) {

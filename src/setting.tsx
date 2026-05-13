@@ -151,12 +151,11 @@ export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CL
 function showTestToast(top: number) {
   const existing = document.querySelector(".fns-preview-toast")
   if (existing) existing.remove()
-  const toast = document.createElement("div")
+  const toast = document.body.createDiv()
   // 复用 .fns-mobile-toast 的样式，仅覆盖 top / Reuse .fns-mobile-toast styles, override top only
   toast.className = "fns-mobile-toast fns-preview-toast"
   toast.style.setProperty("--fns-toast-top-preview", `${top}px`)
   toast.textContent = "Toast"
-  document.body.appendChild(toast)
   setTimeout(() => {
     if (toast.parentElement) {
       toast.classList.add("fns-mobile-toast-hiding")
@@ -753,7 +752,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDebugSettings(set: HTMLElement) {
-    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.support.log")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
         this.plugin.settings.logEnabled = value
         await this.plugin.saveSettings()
@@ -788,7 +787,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDisplaySettings(set: HTMLElement) {
-    new Setting(set).setName($("setting.general.show_notice")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.general.show_notice")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.isShowNotice).onChange(async (value) => {
         if (value != this.plugin.settings.isShowNotice) {
           this.plugin.settings.isShowNotice = value
@@ -829,7 +828,7 @@ export class SettingTab extends PluginSettingTab {
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.mobile_toast_top_desc"))
     }
 
-    new Setting(set).setName($("setting.general.show_share_icon")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.general.show_share_icon")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showShareIcon).onChange(async (value) => {
         if (value != this.plugin.settings.showShareIcon) {
           this.plugin.settings.showShareIcon = value
@@ -840,7 +839,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.show_share_icon_desc"))
 
-    new Setting(set).setName($("setting.general.show_upgrade_badge")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.general.show_upgrade_badge")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showUpgradeBadge).onChange(async (value) => {
         if (value != this.plugin.settings.showUpgradeBadge) {
           this.plugin.settings.showUpgradeBadge = value
@@ -853,7 +852,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.show_upgrade_badge_desc"))
 
-    new Setting(set).setName($("setting.sync.show_concurrency_indicator")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.show_concurrency_indicator")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showConcurrencyIndicator).onChange(async (value) => {
         if (value != this.plugin.settings.showConcurrencyIndicator) {
           this.plugin.settings.showConcurrencyIndicator = value
@@ -864,7 +863,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.show_concurrency_indicator_desc"))
 
-    new Setting(set).setName($("setting.debug.show_version")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.debug.show_version")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showVersionInfo).onChange(async (value) => {
         this.plugin.settings.showVersionInfo = value
         await this.plugin.saveSettings()
@@ -952,7 +951,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.vault_name"))
 
-    new Setting(set).setName($("setting.remote.auto_redirect")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.remote.auto_redirect")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.autoRedirectEnabled).onChange(async (value) => {
         this.plugin.settings.autoRedirectEnabled = value
         await this.plugin.saveSettings()
@@ -1134,7 +1133,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderSyncSettings(set: HTMLElement) {
-    new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.auto_note")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.syncEnabled) {
           this.plugin.settings.syncEnabled = value
@@ -1145,7 +1144,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_note_desc"))
 
-    new Setting(set).setName($("setting.sync.auto_config")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.auto_config")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.configSyncEnabled) {
           this.plugin.settings.configSyncEnabled = value
@@ -1183,7 +1182,7 @@ export class SettingTab extends PluginSettingTab {
           })
       })
 
-    new Setting(set).setName($("setting.sync.binary_limit")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.binary_limit")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.binarySyncLimitEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.binarySyncLimitEnabled) {
           this.plugin.settings.binarySyncLimitEnabled = value
@@ -1193,7 +1192,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.binary_limit_desc"))
 
-    new Setting(set).setName($("setting.sync.pdf_state")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.pdf_state")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.pdfSyncEnabled) {
           this.plugin.settings.pdfSyncEnabled = value
@@ -1203,7 +1202,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.pdf_state_desc"))
 
-    new Setting(set).setName($("setting.sync.concurrency_control")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.concurrency_control")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.concurrencyControlEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.concurrencyControlEnabled) {
           this.plugin.settings.concurrencyControlEnabled = value
@@ -1232,7 +1231,7 @@ export class SettingTab extends PluginSettingTab {
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.max_concurrency_desc"))
     }
 
-    new Setting(set).setName($("setting.sync.offline_delete")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.offline_delete")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.offlineDeleteSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.offlineDeleteSyncEnabled) {
           this.plugin.settings.offlineDeleteSyncEnabled = value
@@ -1242,7 +1241,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.offline_delete_desc"))
 
-    new Setting(set).setName($("setting.sync.manual_sync")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.manual_sync")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.manualSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.manualSyncEnabled) {
           this.plugin.settings.manualSyncEnabled = value
@@ -1252,7 +1251,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.manual_sync_desc"))
 
-    new Setting(set).setName($("setting.sync.readonly_sync")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.readonly_sync")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.readonlySyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.readonlySyncEnabled) {
           this.plugin.settings.readonlySyncEnabled = value
@@ -1262,7 +1261,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.readonly_sync_desc"))
 
-    new Setting(set).setName($("setting.sync.auto_pause_minimized")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.auto_pause_minimized")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.autoPauseMinimized).onChange(async (value) => {
         if (value != this.plugin.settings.autoPauseMinimized) {
           this.plugin.settings.autoPauseMinimized = value
@@ -1272,7 +1271,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_pause_minimized_desc"))
 
-    new Setting(set).setName($("setting.sync.mobile_blur_pause")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.sync.mobile_blur_pause")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.mobileBlurPauseEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.mobileBlurPauseEnabled) {
           this.plugin.settings.mobileBlurPauseEnabled = value
@@ -1379,7 +1378,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderCloudSettings(set: HTMLElement) {
-    new Setting(set).setName($("setting.cloud.title")).addToggle((toggle) =>
+    new Setting(set).setName($("setting.cloud.title")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.cloudPreviewEnabled) {
           this.plugin.settings.cloudPreviewEnabled = value
@@ -1391,7 +1390,7 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.desc"))
 
     if (this.plugin.settings.cloudPreviewEnabled) {
-      new Setting(set).setName($("setting.cloud.type_limit")).addToggle((toggle) =>
+      new Setting(set).setName($("setting.cloud.type_limit")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
           if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
             this.plugin.settings.cloudPreviewTypeRestricted = value
@@ -1417,7 +1416,7 @@ export class SettingTab extends PluginSettingTab {
       remoteUrlSetting.addClass("fast-note-sync-remote-url-setting")
       this.setDescWithBreaks(remoteUrlSetting, $("setting.cloud.remote_source_desc"))
 
-      new Setting(set).setName($("setting.cloud.delete_after_upload")).addToggle((toggle) =>
+      new Setting(set).setName($("setting.cloud.delete_after_upload")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
           if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
             this.plugin.settings.cloudPreviewAutoDeleteLocal = value

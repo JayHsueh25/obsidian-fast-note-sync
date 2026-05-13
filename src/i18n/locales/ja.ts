@@ -374,6 +374,7 @@ export default {
   "ui.recycle_bin.select_all": "すべて選択",
   "ui.share.title": "ノートを共有",
   "ui.share.checking": "共有ステータスを確認中...",
+  "ui.share.not_shared_yet": "このノートはまだ共有されていません",
   "ui.share.create": "共有を有効化",
   "ui.share.success": "共有に成功しました",
   "ui.share.shortLinkCreate": "短縮リンクを生成",

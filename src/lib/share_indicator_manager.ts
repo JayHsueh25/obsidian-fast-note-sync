@@ -76,13 +76,15 @@ export class ShareIndicatorManager {
             if (!path) return;
 
             const isShared = sharedPaths.has(path) || ancestorFolders.has(path);
+            const targetEl = el.parentElement || el; // 尝试给父级（.nav-file / .nav-folder）加标记 / Tag parent element
+            
             if (isShared) {
-                if (el.getAttribute('data-fns-shared') !== 'true') {
-                    el.setAttribute('data-fns-shared', 'true');
+                if (targetEl.getAttribute('data-fns-shared') !== 'true') {
+                    targetEl.setAttribute('data-fns-shared', 'true');
                 }
             } else {
-                if (el.hasAttribute('data-fns-shared')) {
-                    el.removeAttribute('data-fns-shared');
+                if (targetEl.hasAttribute('data-fns-shared')) {
+                    targetEl.removeAttribute('data-fns-shared');
                 }
             }
         });

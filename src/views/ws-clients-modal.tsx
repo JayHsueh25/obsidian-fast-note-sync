@@ -52,23 +52,22 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
     }, []);
 
     return (
-        <div className="fns-ws-clients-view" style={{ padding: '16px 0' }}>
-            <div className="fns-ws-clients-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1em', fontWeight: 'bold' }}>
+        <div className="fns-ws-clients-view">
+            <div className="fns-ws-clients-header">
+                <div className="fns-ws-clients-title-group">
                     <LucideIcon icon="monitor" size={20} />
                     {$("ui.system.websocketClients")}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="fns-ws-clients-stats-group">
                     {clients.length > 0 && (
-                        <span style={{ fontSize: '0.85em', opacity: 0.7, border: '1px solid var(--background-modifier-border)', padding: '2px 8px', borderRadius: '12px' }}>
+                        <span className="fns-ws-clients-count-badge">
                             {clients.length} {$("ui.system.wsClientName")}
                         </span>
                     )}
                     <button 
-                        className="clickable-icon" 
+                        className="clickable-icon fns-ws-clients-refresh-btn" 
                         onClick={loadClients} 
                         disabled={isLoading}
-                        style={{ padding: '4px', background: 'transparent', boxShadow: 'none' }}
                         aria-label={$("ui.common.refresh")}
                     >
                         <LucideIcon icon="refresh-cw" size={16} className={isLoading ? "is-spinning" : ""} />
@@ -76,11 +75,11 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
                 </div>
             </div>
 
-            <div className="fns-ws-clients-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="fns-ws-clients-list">
                 {clients.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '32px 0', fontSize: '0.9em', color: 'var(--text-muted)', fontStyle: 'italic', border: '1px dashed var(--background-modifier-border)', borderRadius: '8px' }}>
+                    <div className="fns-ws-clients-empty-state">
                         {isLoading ? (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <div className="fns-ws-clients-loading-indicator">
                                 <LucideIcon icon="loader-2" className="is-spinning" size={16} />
                                 <span>{$("ui.history.loading")}</span>
                             </div>
@@ -90,31 +89,31 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
                     </div>
                 ) : (
                     clients.map((client) => (
-                        <div key={client.traceId} style={{ padding: '12px', background: 'var(--background-secondary)', borderRadius: '8px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ padding: '6px', background: 'var(--background-primary)', borderRadius: '6px', border: '1px solid var(--background-modifier-border)' }}>
+                        <div key={client.traceId} className="fns-ws-clients-item">
+                            <div className="fns-ws-clients-item-top">
+                                <div className="fns-ws-clients-item-main">
+                                    <div className="fns-ws-clients-item-icon-wrapper">
                                         <LucideIcon icon={client.platformInfo?.isMobile ? "smartphone" : "laptop"} size={16} style={{ color: 'var(--text-accent)' }} />
                                     </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.95em', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div className="fns-ws-clients-item-identity">
+                                        <div className="fns-ws-clients-item-name-row">
                                             {client.clientName || client.nickname || $("ui.common.na")}
-                                            <span style={{ fontSize: '0.8em', fontWeight: 'normal', color: 'var(--text-muted)' }}>v{client.clientVersion}</span>
+                                            <span className="fns-ws-clients-item-version-tag">v{client.clientVersion}</span>
                                         </div>
-                                        <div style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'var(--font-monospace)' }}>
+                                        <div className="fns-ws-clients-item-address-line">
                                             {client.remoteAddr}
                                         </div>
                                     </div>
                                 </div>
-                                <span style={{ fontSize: '0.8em', padding: '2px 8px', background: 'var(--background-modifier-hover)', borderRadius: '12px', fontWeight: '500' }}>
+                                <span className="fns-ws-clients-item-type-tag">
                                     {client.clientType}
                                 </span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', marginTop: '4px', borderTop: '1px solid var(--background-modifier-border)' }}>
-                                <div style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>
+                            <div className="fns-ws-clients-item-bottom">
+                                <div className="fns-ws-clients-item-timestamp">
                                     {$("ui.system.wsStartTime")}: {new Date(client.startTime).toLocaleString()}
                                 </div>
-                                <div style={{ fontSize: '0.8em', color: 'var(--text-muted)', fontFamily: 'var(--font-monospace)', opacity: 0.5 }}>
+                                <div className="fns-ws-clients-item-uid-info">
                                     UID: {client.uid}
                                 </div>
                             </div>

@@ -225,14 +225,14 @@ export class FileCloudPreview {
   }
 
   private createImagePreview(cloudUrl: string, filePath: string): HTMLElement {
-    const img = document.createElement("img");
+    const img = createEl("img");
     img.src = cloudUrl;
     img.alt = filePath;
     return img;
   }
 
   private createVideoPreview(cloudUrl: string, subpath?: string): HTMLElement {
-    const video = document.createElement("video");
+    const video = createEl("video");
     video.src = cloudUrl;
     video.controls = true;
     video.preload = "metadata";
@@ -244,7 +244,7 @@ export class FileCloudPreview {
   }
 
   private createAudioPreview(cloudUrl: string, subpath?: string): HTMLElement {
-    const audio = document.createElement("audio");
+    const audio = createEl("audio");
     audio.src = cloudUrl;
     audio.controls = true;
     // @ts-ignore
@@ -262,14 +262,14 @@ export class FileCloudPreview {
 
     // use electron's native pdf viewer for desktop app
     if (Platform.isDesktopApp) {
-      const iframe = document.createElement("iframe");
+      const iframe = createEl("iframe");
       iframe.src = cloudUrl;
       iframe.addClass("fns-iframe-full");
       return iframe;
     }
 
     // --- 1. DOM Structure (Matching Obsidian's Internal Structure) ---
-    const loadingContainer = document.createElement("div"); // The root wrapper we return
+    const loadingContainer = createEl("div"); // The root wrapper we return
     loadingContainer.addClass("pdf-preview-wrapper", "fns-pdf-preview-wrapper");
     // Use setCssProps for dynamic height (PDF viewer container)
     // 使用 setCssProps 设置 PDF 预览容器动态高度
@@ -507,7 +507,7 @@ export class FileCloudPreview {
   }
 
   private createGenericPreview(filePath: string, cloudUrl: string): HTMLElement {
-    const container = document.createElement("div");
+    const container = createEl("div");
     container.addClass("file-embed-title");
 
     const fileName = filePath.split("/").pop() || filePath;

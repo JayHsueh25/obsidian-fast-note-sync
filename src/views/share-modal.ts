@@ -1,4 +1,4 @@
-import { App, Modal, setIcon, ButtonComponent } from "obsidian";
+import { App, Modal, setIcon, ButtonComponent, setTooltip } from "obsidian";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 import { showSyncNotice } from "../lib/helps";
@@ -44,24 +44,26 @@ export class ShareModal extends Modal {
         contentEl.empty();
         contentEl.addClass("fns-share-modal");
 
-        // 标题增加图标
+        // 1. Hero Section (Header + File Badge)
         this.titleEl.empty();
-        const titleIcon = this.titleEl.createSpan();
-        titleIcon.addClass("fns-margin-r-8", "fns-inline-flex", "fns-flex-center-v");
+        const headerContainer = this.titleEl.createDiv("fns-share-header-group");
+        const titleIcon = headerContainer.createSpan("fns-share-title-icon");
         setIcon(titleIcon, "share-2");
-        this.titleEl.createSpan({ text: $("ui.share.title") });
+        headerContainer.createSpan({ text: $("ui.share.title") });
 
         const container = contentEl.createDiv("fns-share-container");
-        container.addClass("fns-padding-10");
 
-        const filePathEl = container.createDiv("fns-share-file-path");
-        filePathEl.addClass("fns-margin-b-20", "fns-muted-text", "fns-font-09", "fns-break-all", "fns-bg-field", "fns-padding-10", "fns-radius-8");
-        filePathEl.innerText = this.path;
+        // File Badge
+        const fileBadge = container.createDiv("fns-file-badge");
+        const fileIcon = fileBadge.createSpan("fns-file-icon");
+        setIcon(fileIcon, "file-text");
+        fileBadge.createSpan({ text: this.path.split("/").pop() || this.path });
+        setTooltip(fileBadge, this.path);
  
         if (this.loading) {
-            const loadingEl = container.createDiv("fns-share-loading");
-            loadingEl.addClass("fns-text-center", "fns-padding-20", "fns-muted-text");
-            loadingEl.innerText = $("ui.share.checking");
+            const loadingEl = container.createDiv("fns-share-loading-state");
+            const spinner = loadingEl.createDiv("fns-spinner");
+            loadingEl.createDiv({ text: $("ui.share.checking"), cls: "fns-loading-text" });
             return;
         }
 
@@ -73,10 +75,13 @@ export class ShareModal extends Modal {
     }
 
     private renderCreateButton(parent: HTMLElement) {
-        const btnContainer = parent.createDiv("fns-share-btn-container");
-        btnContainer.addClass("fns-text-center", "fns-padding-v-20");
+        const emptyState = parent.createDiv("fns-share-empty-state");
+        const emptyIcon = emptyState.createDiv("fns-empty-icon");
+        setIcon(emptyIcon, "share-2");
+        
+        emptyState.createDiv({ text: $("ui.share.not_shared_yet"), cls: "fns-empty-text" });
 
-        const btn = new ButtonComponent(btnContainer)
+        const btn = new ButtonComponent(emptyState)
             .setButtonText(this.loading ? $("ui.share.button_creating") : $("ui.share.create"))
             .setCta()
             .setDisabled(this.loading)
@@ -88,171 +93,144 @@ export class ShareModal extends Modal {
                 if (res) {
                     this.shareData = res;
                     showSyncNotice($("ui.share.success"));
-                    // 更新分享指示器缓存 / Update share indicator cache
                     this.plugin.shareIndicatorManager?.addSharedPath(this.path);
                 }
                 this.render();
             });
+        btn.buttonEl.addClass("fns-share-create-btn");
     }
 
     private renderShareResult(parent: HTMLElement) {
-        const resultContainer = parent.createDiv("fns-share-result");
+        const resultContainer = parent.createDiv("fns-share-result-layout");
         
-        // --- 1. 分享链接部分 ---
-        const labelEl = resultContainer.createDiv("fns-share-label");
-        labelEl.addClass("fns-margin-b-8", "fns-bold", "fns-flex", "fns-flex-center-v", "fns-gap-5", "fns-font-085", "fns-muted-text");
-        const linkLabelIcon = labelEl.createSpan();
-        setIcon(linkLabelIcon, "globe");
-        labelEl.createSpan({ text: $("ui.share.link") });
+        // --- 1. 分享链接部分 (Card) ---
+        const linkCard = resultContainer.createDiv("fns-share-card");
+        const linkHeader = linkCard.createDiv("fns-share-card-header");
+        setIcon(linkHeader.createSpan(), "globe");
+        linkHeader.createSpan({ text: $("ui.share.link") });
 
         const apiBase = this.shareData?.baseUrl || (this.plugin.runApi || this.plugin.settings.api).replace(/\/+$/, "");
         const shareUrl = `${apiBase}/share/${this.shareData?.id}/${this.shareData?.token}`;
 
-        const linkContainer = resultContainer.createDiv("fns-share-link-container");
-        linkContainer.addClass("fns-flex", "fns-gap-10", "fns-margin-b-20");
-
-        // 输入框包装容器
-        const inputWrapper = linkContainer.createDiv();
-        inputWrapper.addClass("fns-relative", "fns-flex-1");
-
-        const inputEl = inputWrapper.createEl("input", {
+        const linkActionGroup = linkCard.createDiv("fns-share-input-group");
+        
+        const linkInputWrapper = linkActionGroup.createDiv("fns-input-wrapper");
+        const linkInput = linkInputWrapper.createEl("input", {
             type: "text",
             value: shareUrl,
         });
-        inputEl.addClass("fns-w-100", "fns-padding-r-35");
-        inputEl.readOnly = true;
+        linkInput.readOnly = true;
 
-        // 内嵌复制按钮
-        const copyBtn = new ButtonComponent(inputWrapper)
+        const linkCopyBtn = new ButtonComponent(linkInputWrapper)
             .setIcon("copy")
             .setTooltip($("ui.share.copy"));
-        
-        copyBtn.buttonEl.addClass("fns-abs-center-v-right", "fns-no-shadow", "fns-no-border", "fns-bg-transparent", "fns-muted-text", "fns-flex", "fns-h-auto", "fns-padding-5", "fns-opacity-5");
-
-        copyBtn.onClick(() => {
+        linkCopyBtn.buttonEl.addClass("fns-input-action-btn");
+        linkCopyBtn.onClick(() => {
             navigator.clipboard.writeText(shareUrl);
             showSyncNotice($("ui.share.copy_success"));
         });
 
-        // 查看分享按钮 (保持在外面)
-        new ButtonComponent(linkContainer)
+        const externalBtn = new ButtonComponent(linkActionGroup)
             .setIcon("external-link")
-            .setTooltip($("ui.share.viewShare"))
-            .onClick(() => {
-                window.open(shareUrl, "_blank");
-            });
+            .setTooltip($("ui.share.viewShare"));
+        externalBtn.buttonEl.addClass("fns-share-icon-btn");
+        externalBtn.onClick(() => window.open(shareUrl, "_blank"));
 
-        // --- 2. 密码管理部分 ---
-        const passwordLabelEl = resultContainer.createDiv("fns-share-label");
-        passwordLabelEl.addClass("fns-margin-b-8", "fns-bold", "fns-flex", "fns-flex-center-v", "fns-gap-5", "fns-font-085", "fns-muted-text");
-        const pwdLabelIcon = passwordLabelEl.createSpan();
-        setIcon(pwdLabelIcon, "lock");
-        passwordLabelEl.createSpan({ text: $("ui.share.password") });
+        // --- 2. 访问密码部分 (Card) ---
+        const pwdCard = resultContainer.createDiv("fns-share-card");
+        const pwdHeader = pwdCard.createDiv("fns-share-card-header");
+        setIcon(pwdHeader.createSpan(), "lock");
+        pwdHeader.createSpan({ text: $("ui.share.password") });
 
-        const passwordContainer = resultContainer.createDiv("fns-share-password-container");
-        passwordContainer.addClass("fns-flex", "fns-gap-10", "fns-margin-b-20");
+        const pwdActionGroup = pwdCard.createDiv("fns-share-input-group");
+        const pwdInputWrapper = pwdActionGroup.createDiv("fns-input-wrapper");
 
-        // 密码输入框包装容器
-        const pwdInputWrapper = passwordContainer.createDiv();
-        pwdInputWrapper.addClass("fns-relative", "fns-flex-1");
-
-        // 如果已经有密码且用户还没修改，显示假密码
         let displayValue = this.passwordValue;
         if (this.shareData?.isPassword && !this.isPasswordVisible && !this.passwordValue) {
             displayValue = "******";
         }
 
-        const pwdInputEl = pwdInputWrapper.createEl("input", {
+        const pwdInput = pwdInputWrapper.createEl("input", {
             type: this.isPasswordVisible ? "text" : "password",
             value: displayValue,
             placeholder: $("ui.share.passwordPlaceholder")
         });
-        pwdInputEl.addClass("fns-w-100", "fns-padding-r-35");
 
-        // 眼睛按钮逻辑 (内嵌至容器最右侧，使用 ButtonComponent 确保与复制按钮尺寸一致)
         const eyeBtn = new ButtonComponent(pwdInputWrapper)
-            .setIcon(this.isPasswordVisible ? "eye-off" : "eye")
-            .onClick(() => {
-                this.isPasswordVisible = !this.isPasswordVisible;
-                if (this.isPasswordVisible && this.shareData?.isPassword && !this.passwordValue) {
-                    this.passwordValue = "";
-                }
-                this.render();
-            });
-        
-        eyeBtn.buttonEl.addClass("fns-abs-center-v-right", "fns-no-shadow", "fns-no-border", "fns-bg-transparent", "fns-muted-text", "fns-flex", "fns-h-auto", "fns-padding-5", "fns-opacity-5");
-
-        pwdInputEl.addEventListener("input", (e) => {
-            this.passwordValue = (e.target as HTMLInputElement).value;
-            this.isPasswordDirty = true;
+            .setIcon(this.isPasswordVisible ? "eye-off" : "eye");
+        eyeBtn.buttonEl.addClass("fns-input-action-btn");
+        eyeBtn.onClick(() => {
+            this.isPasswordVisible = !this.isPasswordVisible;
+            if (this.isPasswordVisible && this.shareData?.isPassword && !this.passwordValue) {
+                this.passwordValue = "";
+            }
+            this.render();
         });
 
-        // 保存密码按钮
-        new ButtonComponent(passwordContainer)
+        const savePwdBtn = new ButtonComponent(pwdActionGroup)
             .setIcon("check")
             .setTooltip($("ui.common.save"))
-            .setDisabled(this.loading)
-            .onClick(async () => {
-                if (!this.isPasswordDirty) {
-                    showSyncNotice($("ui.common.noChange"));
-                    return;
-                }
-                this.loading = true;
-                this.render();
-                const success = await this.plugin.api.updateSharePassword(this.path, this.passwordValue);
-                this.loading = false;
-                if (success) {
-                    showSyncNotice($("ui.common.saveSuccess"));
-                    this.shareData!.isPassword = !!this.passwordValue;
-                    this.isPasswordDirty = false;
-                    if (this.passwordValue) {
-                        this.passwordValue = "";
-                        this.isPasswordVisible = false;
-                    }
-                }
-                this.render();
-            });
+            .setDisabled(this.loading);
+        savePwdBtn.buttonEl.addClass("fns-share-icon-btn");
+        if (this.isPasswordDirty) savePwdBtn.buttonEl.addClass("is-dirty");
 
-        // --- 3. 短链接部分 ---
-        const shortLinkLabelEl = resultContainer.createDiv("fns-share-label");
-        shortLinkLabelEl.addClass("fns-margin-b-8", "fns-bold", "fns-flex", "fns-flex-center-v", "fns-gap-5", "fns-font-085", "fns-muted-text");
-        const shortLinkIcon = shortLinkLabelEl.createSpan();
-        setIcon(shortLinkIcon, "link-2");
-        shortLinkLabelEl.createSpan({ text: $("ui.share.shortLink") });
+        pwdInput.addEventListener("input", (e) => {
+            this.passwordValue = (e.target as HTMLInputElement).value;
+            this.isPasswordDirty = true;
+            savePwdBtn.buttonEl.addClass("is-dirty");
+        });
 
-        const shortLinkContainer = resultContainer.createDiv("fns-share-short-link-container");
-        shortLinkContainer.addClass("fns-flex", "fns-gap-10", "fns-margin-b-20");
+        savePwdBtn.onClick(async () => {
+            if (!this.isPasswordDirty) {
+                showSyncNotice($("ui.common.noChange"));
+                return;
+            }
+            this.loading = true;
+            this.render();
+            const success = await this.plugin.api.updateSharePassword(this.path, this.passwordValue);
+            this.loading = false;
+            if (success) {
+                showSyncNotice($("ui.common.saveSuccess"));
+                this.shareData!.isPassword = !!this.passwordValue;
+                this.isPasswordDirty = false;
+                if (this.passwordValue) {
+                    this.passwordValue = "";
+                    this.isPasswordVisible = false;
+                }
+            }
+            this.render();
+        });
+
+        // --- 3. 短链接部分 (Card) ---
+        const shortCard = resultContainer.createDiv("fns-share-card");
+        const shortHeader = shortCard.createDiv("fns-share-card-header");
+        setIcon(shortHeader.createSpan(), "link-2");
+        shortHeader.createSpan({ text: $("ui.share.shortLink") });
+
+        const shortActionGroup = shortCard.createDiv("fns-share-input-group");
 
         if (this.shareData?.shortLink) {
-            // 短链接输入框包装容器
-            const shortInputWrapper = shortLinkContainer.createDiv();
-            shortInputWrapper.addClass("fns-relative", "fns-flex-1");
-
-            const shortInputEl = shortInputWrapper.createEl("input", {
+            const shortInputWrapper = shortActionGroup.createDiv("fns-input-wrapper");
+            const shortInput = shortInputWrapper.createEl("input", {
                 type: "text",
                 value: this.shareData.shortLink,
             });
-            shortInputEl.addClass("fns-w-100", "fns-padding-r-35");
-            shortInputEl.readOnly = true;
+            shortInput.readOnly = true;
 
-            // 内嵌复制按钮
             const shortCopyBtn = new ButtonComponent(shortInputWrapper)
                 .setIcon("copy")
                 .setTooltip($("ui.share.shortLinkCopy"));
-            
-            shortCopyBtn.buttonEl.addClass("fns-abs-center-v-right", "fns-no-shadow", "fns-no-border", "fns-bg-transparent", "fns-muted-text", "fns-flex", "fns-h-auto", "fns-padding-5", "fns-opacity-5");
-
+            shortCopyBtn.buttonEl.addClass("fns-input-action-btn");
             shortCopyBtn.onClick(() => {
                 navigator.clipboard.writeText(this.shareData!.shortLink!);
                 showSyncNotice($("ui.share.copy_success"));
             });
             
-            // 刷新/重新生成按钮
-            const refreshBtn = new ButtonComponent(shortLinkContainer)
+            const refreshBtn = new ButtonComponent(shortActionGroup)
                 .setIcon("refresh-cw")
                 .setTooltip($("ui.share.shortLinkCreate"))
                 .setDisabled(this.loading);
-            
+            refreshBtn.buttonEl.addClass("fns-share-icon-btn");
             refreshBtn.onClick(async () => {
                 refreshBtn.setDisabled(true);
                 const newShortLink = await this.plugin.api.createShortLink(this.path, true, shareUrl);
@@ -264,72 +242,58 @@ export class ShareModal extends Modal {
             });
 
         } else {
-            const emptyInput = shortLinkContainer.createEl("input", {
+            const shortInputWrapper = shortActionGroup.createDiv("fns-input-wrapper");
+            
+            const shortInput = shortInputWrapper.createEl("input", {
                 type: "text",
                 placeholder: $("ui.share.shortLink"),
             });
-            emptyInput.addClass("fns-flex-1");
+            shortInput.readOnly = true; // 占位显示
 
-            new ButtonComponent(shortLinkContainer)
-                .setIcon("link-2")
+            const createShortBtn = new ButtonComponent(shortActionGroup)
                 .setButtonText($("ui.share.shortLinkCreate"))
-                .setDisabled(this.loading)
-                .onClick(async () => {
-                    this.loading = true;
-                    this.render();
-                    const shortLink = await this.plugin.api.createShortLink(this.path, false, shareUrl);
-                    this.loading = false;
-                    if (shortLink) {
-                        this.shareData!.shortLink = shortLink;
-                    }
-                    this.render();
-                });
+                .setDisabled(this.loading);
+            createShortBtn.buttonEl.addClass("fns-share-text-btn");
+            createShortBtn.onClick(async () => {
+                this.loading = true;
+                this.render();
+                const shortLink = await this.plugin.api.createShortLink(this.path, false, shareUrl);
+                this.loading = false;
+                if (shortLink) {
+                    this.shareData!.shortLink = shortLink;
+                }
+                this.render();
+            });
         }
 
-        // --- 4. 底部操作栏 (左右布局) ---
-        const footerContainer = resultContainer.createDiv("fns-share-footer");
-        footerContainer.addClass("fns-flex-between", "fns-margin-b-20", "fns-padding-v-20", "fns-share-footer");
-
-        // 左侧：分享成功提示
-        const tipEl = footerContainer.createDiv("fns-share-tip");
-        tipEl.addClass("fns-font-085", "fns-accent-text", "fns-flex-center-v", "fns-gap-5");
-        const iconSpan = tipEl.createSpan();
-        iconSpan.addClass("fns-inline-flex", "fns-flex-center-v");
-        setIcon(iconSpan, "check-circle-2");
-        tipEl.createSpan({ text: $("ui.share.success") });
-
-        // 右侧：取消分享按钮
-        const cancelBtn = new ButtonComponent(footerContainer)
-            .setCta()
-            .setDisabled(this.loading);
+        // --- 4. Footer Section ---
+        const footer = resultContainer.createDiv("fns-share-footer-v2");
         
-        cancelBtn.buttonEl.addClass("fns-flex-center", "fns-gap-8");
+        const statusTip = footer.createDiv("fns-share-status-tip");
+        setIcon(statusTip.createSpan(), "check-circle-2");
+        statusTip.createSpan({ text: $("ui.share.success") });
 
-        // 确保按钮内容为空后再手动构建，防止重复或冲突
+        const cancelBtn = new ButtonComponent(footer)
+            .setDisabled(this.loading)
+            .onClick(async () => {
+                this.loading = true;
+                this.render();
+                const success = await this.plugin.api.cancelShare(this.path);
+                this.loading = false;
+                if (success) {
+                    this.shareData = null;
+                    this.passwordValue = "";
+                    this.isPasswordVisible = false;
+                    this.isPasswordDirty = false;
+                    showSyncNotice($("ui.share.cancel_success"));
+                    this.plugin.shareIndicatorManager?.removeSharedPath(this.path);
+                }
+                this.render();
+            });
+        
+        cancelBtn.buttonEl.addClass("fns-share-cancel-btn");
         cancelBtn.buttonEl.empty();
-
-        // 分别创建图标和文字的 span
-        const cancelIconSpan = cancelBtn.buttonEl.createSpan();
-        cancelIconSpan.addClass("fns-inline-flex", "fns-flex-center-v");
-        setIcon(cancelIconSpan, "unlink"); 
-        
+        setIcon(cancelBtn.buttonEl.createSpan(), "unlink"); 
         cancelBtn.buttonEl.createSpan({ text: $("ui.share.cancel") });
-
-        cancelBtn.onClick(async () => {
-            this.loading = true;
-            this.render();
-            const success = await this.plugin.api.cancelShare(this.path);
-            this.loading = false;
-            if (success) {
-                this.shareData = null;
-                this.passwordValue = "";
-                this.isPasswordVisible = false;
-                this.isPasswordDirty = false;
-                showSyncNotice($("ui.share.cancel_success"));
-                // 更新分享指示器缓存 / Update share indicator cache
-                this.plugin.shareIndicatorManager?.removeSharedPath(this.path);
-            }
-            this.render();
-        });
     }
 }
