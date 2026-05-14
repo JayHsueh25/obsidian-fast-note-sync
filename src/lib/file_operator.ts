@@ -43,6 +43,10 @@ export const clearAllTempChunks = async (plugin: FastSync) => {
     dump(`Cleaning all temp chunks: ${path}`)
     await plugin.app.vault.adapter.rmdir(path, true)
   }
+  // 确保基础目录在清理后立即存在 (Ensure base dir exists immediately after cleanup)
+  if (!(await plugin.app.vault.adapter.exists(path))) {
+    await plugin.app.vault.adapter.mkdir(path)
+  }
 }
 
 /**
@@ -780,8 +784,12 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
     plugin.fileDownloadSessions.set(data.sessionId, session)
   }
 
-  // 确保临时目录存在
+  // 确保临时目录存在 (Ensure temp directory exists)
   if (data.totalChunks > 0) {
+    const baseDir = getTempChunksDir(plugin)
+    if (!(await plugin.app.vault.adapter.exists(baseDir))) {
+      await plugin.app.vault.adapter.mkdir(baseDir)
+    }
     const tempPath = getTempChunksDir(plugin, data.sessionId)
     if (!(await plugin.app.vault.adapter.exists(tempPath))) {
       await plugin.app.vault.adapter.mkdir(tempPath)
@@ -897,6 +905,13 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
 
   // 写入磁盘
   if (session.tempDir) {
+    if (!(await plugin.app.vault.adapter.exists(session.tempDir))) {
+      const baseDir = getTempChunksDir(plugin)
+      if (!(await plugin.app.vault.adapter.exists(baseDir))) {
+        await plugin.app.vault.adapter.mkdir(baseDir)
+      }
+      await plugin.app.vault.adapter.mkdir(session.tempDir)
+    }
     const chunkPath = normalizePath(`${session.tempDir}/${chunkIndex}.bin`)
     await plugin.app.vault.adapter.writeBinary(chunkPath, chunkData)
     session.downloadedChunks?.add(chunkIndex)

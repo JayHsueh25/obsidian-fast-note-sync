@@ -330,7 +330,7 @@ export default class FastSync extends Plugin {
       this.menuManagerInitialized = true
 
       // 0. 清理残留的临时下载目录 (Cleanup residual temp download dirs)
-      clearAllTempChunks(this)
+      await clearAllTempChunks(this)
 
       // 1. 初始化统计和日志 (UI)
       SyncLogManager.getInstance().init(this)
