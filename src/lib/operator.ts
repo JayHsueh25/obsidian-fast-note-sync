@@ -5,7 +5,7 @@ import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, r
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, hashFileAsync } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, hashFileAsync, formatFileSize } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
@@ -441,8 +441,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const totalToProcess = totalFiles + estimatedConfigCount;
 
     for (const file of list) {
-      // 每处理 100 个文件让出一次主线程，防止 UI 卡死
-      if (++processedCount % 100 === 0) {
+      // 每处理 20 个文件让出一次主线程，防止 UI 卡死 (已将 100 优化为 20)
+      if (++processedCount % 20 === 0) {
         await sleep(0);
         // 更新扫描进度
         SyncLogManager.getInstance().addOrUpdateLog({
@@ -455,88 +455,104 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         });
       }
 
-      if (isPathExcluded(file.path, plugin)) continue;
-      if (file instanceof TFolder) {
-        if (file.path === "/") continue;
+      try {
+        if (isPathExcluded(file.path, plugin)) continue;
+        if (file instanceof TFolder) {
+          if (file.path === "/") continue;
 
-        // 使用虚拟化 mtime：优先从快照读取，若是新路径则用当前时间
-        let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
+          // 使用虚拟化 mtime：优先从快照读取，若是新路径则用当前时间
+          let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
 
-        // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
-        if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime")) && plugin.folderSnapshotManager.getMtime(file.path) !== undefined) continue;
+          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
+          if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime")) && plugin.folderSnapshotManager.getMtime(file.path) !== undefined) continue;
 
-        folders.push({
-          path: file.path,
-          pathHash: hashContent(file.path),
-        });
-        continue;
-      }
-
-      if (file instanceof TFile) {
-        if (file.extension === "md") {
-          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间，且无待确认上传时跳过
-          // Skip only if file is tracked, mtime not newer than last sync time, and no pending note modify
-          if (isLoadLastTime
-            && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
-            && plugin.fileHashManager.getPathHash(file.path) !== null
-            && !plugin.pendingNoteModifies.has(file.path)) continue;
-          const baseHash = plugin.fileHashManager.getPathHash(file.path);
-          // 尝试从缓存获取有效的哈希，避免重复计算 (Try to get valid hash from cache)
-          let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
-          if (contentHash === null) {
-            contentHash = await hashContentAsync(await plugin.app.vault.read(file));
-            // 只有在计算出新哈希后才更新缓存，但注意：正式写入 hashManager 建议在 Ack 之后
-            // 这里我们先不更新 hashManager，保持现有的 Ack 后写入逻辑以确保一致性
-            // 不过为了让 Full Sync 能利用缓存，我们需要在 initialize 时或者之前同步过
-          }
-
-          let item = {
+          folders.push({
             path: file.path,
             pathHash: hashContent(file.path),
-            contentHash: contentHash,
-            mtime: file.stat.mtime,
-            ctime: file.stat.ctime,
-            size: file.stat.size,
-            // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-            ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-          }
-
-          notes.push(item);
-        } else {
-
-          if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
-            dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
-            continue;
-          }
-          const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
-          if (skipSync) continue;
-
-          // 优化增量同步过滤：仅在文件已追踪、mtime 未超过上次同步时间且无待确认上传时跳过
-          // Skip only if file is tracked, mtime not newer than last sync time, and no pending upload
-          if (isLoadLastTime
-            && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
-            && plugin.fileHashManager.getPathHash(file.path) !== null
-            && !plugin.pendingUploadHashes.has(file.path)) continue;
-          const baseHash = plugin.fileHashManager.getPathHash(file.path);
-          // 尝试从缓存获取有效的哈希，避免重复计算 (Try to get valid hash from cache)
-          let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
-          if (contentHash === null) {
-            contentHash = await hashFileAsync(plugin.app, file.path);
-            logMemorySnapshot(`after scan hash ${file.path}`);
-          }
-
-          let item = {
-            path: file.path,
-            pathHash: hashContent(file.path),
-            contentHash: contentHash,
-            mtime: file.stat.mtime,
-            ctime: file.stat.ctime,
-            size: file.stat.size,
-            // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-            ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-          }
-          files.push(item);
+          });
+          continue;
         }
+
+        if (file instanceof TFile) {
+          if (file.extension === "md") {
+            // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间，且无待确认上传时跳过
+            if (isLoadLastTime
+              && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
+              && plugin.fileHashManager.getPathHash(file.path) !== null
+              && !plugin.pendingNoteModifies.has(file.path)) continue;
+            
+            // 如果文件较大，更新日志消息让用户感知进度 (Update log for large files)
+            if (file.stat.size > 2 * 1024 * 1024) {
+               SyncLogManager.getInstance().addOrUpdateLog({
+                 id: hashingLogId,
+                 type: 'info',
+                 action: `VaultScanning_${plugin.currentSyncType}`,
+                 message: `🔍 正在哈希笔记: ${file.name} (${formatFileSize(file.stat.size)})`
+               });
+            }
+
+            const baseHash = plugin.fileHashManager.getPathHash(file.path);
+            let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
+            if (contentHash === null) {
+              contentHash = await hashContentAsync(await plugin.app.vault.read(file));
+            }
+
+            let item = {
+              path: file.path,
+              pathHash: hashContent(file.path),
+              contentHash: contentHash,
+              mtime: file.stat.mtime,
+              ctime: file.stat.ctime,
+              size: file.stat.size,
+              ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+            }
+            notes.push(item);
+          } else {
+            if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
+              dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
+              continue;
+            }
+            const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
+            if (skipSync) continue;
+
+            if (isLoadLastTime
+              && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
+              && plugin.fileHashManager.getPathHash(file.path) !== null
+              && !plugin.pendingUploadHashes.has(file.path)) continue;
+            
+            // 处理大附件时实时显示文件名，避免假死感 (Update message for large attachments)
+            if (file.stat.size > 5 * 1024 * 1024) {
+              SyncLogManager.getInstance().addOrUpdateLog({
+                id: hashingLogId,
+                type: 'info',
+                action: `VaultScanning_${plugin.currentSyncType}`,
+                message: `🔍 正在哈希附件: ${file.name} (${formatFileSize(file.stat.size)})`
+              });
+            }
+
+            const baseHash = plugin.fileHashManager.getPathHash(file.path);
+            let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
+            if (contentHash === null) {
+              contentHash = await hashFileAsync(plugin.app, file.path);
+              logMemorySnapshot(`after scan hash ${file.path}`);
+            }
+
+            let item = {
+              path: file.path,
+              pathHash: hashContent(file.path),
+              contentHash: contentHash,
+              mtime: file.stat.mtime,
+              ctime: file.stat.ctime,
+              size: file.stat.size,
+              ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+            }
+            files.push(item);
+          }
+        }
+      } catch (e) {
+        // 单个文件处理失败不应中断整个同步流程
+        console.warn(`[FastNoteSync] 跳过异常文件 ${file.path}: ${e.message}`);
+        dump(`Error processing file ${file.path}:`, e);
       }
     }
 
@@ -615,7 +631,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   const overallTotal = baseProcessedCount + totalConfigs;
 
   for (const path of configPaths) {
-    if (++configCount % 50 === 0) {
+    if (++configCount % 20 === 0) { // 已将 50 优化为 20
       await sleep(0);
       SyncLogManager.getInstance().addOrUpdateLog({
         id: hashingLogId,
@@ -626,31 +642,46 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         message: `${plugin.currentSyncType === 'full' ? '⚙️ 正在全量扫描配置' : '⚙️ 正在增量扫描配置'}... (${configCount}/${totalConfigs})`
       });
     }
-    if (configIsPathExcluded(path, plugin)) continue;
-    const fullPath = normalizePath(path);
-    const stat = await plugin.app.vault.adapter.stat(fullPath);
-    if (!stat) continue;
-    if (isLargeBinarySyncRisk(stat.size, plugin)) {
-      dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
-      continue;
-    }
-    if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
-    // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
-    let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
-    if (contentHash === null) {
-      let content: ArrayBuffer | null = await plugin.app.vault.adapter.readBinary(fullPath);
-      contentHash = await hashArrayBuffer(content);
-      content = null;
-    }
+    
+    try {
+      if (configIsPathExcluded(path, plugin)) continue;
+      const fullPath = normalizePath(path);
+      const stat = await plugin.app.vault.adapter.stat(fullPath);
+      if (!stat) continue;
+      if (isLargeBinarySyncRisk(stat.size, plugin)) {
+        dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
+        continue;
+      }
+      if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
+      
+      // 处理大配置文件时更新消息
+      if (stat.size > 2 * 1024 * 1024) {
+        SyncLogManager.getInstance().addOrUpdateLog({
+          id: hashingLogId,
+          type: 'info',
+          action: `VaultScanning_${plugin.currentSyncType}`,
+          message: `⚙️ 正在哈希配置: ${path.split('/').pop()} (${formatFileSize(stat.size)})`
+        });
+      }
 
-    configs.push({
-      path: path,
-      pathHash: hashContent(path),
-      contentHash: contentHash,
-      mtime: stat.mtime,
-      ctime: stat.ctime,
-      size: stat.size
-    });
+      // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
+      let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
+      if (contentHash === null) {
+        contentHash = await hashFileAsync(plugin.app, path);
+      }
+
+      configs.push({
+        path: path,
+        pathHash: hashContent(path),
+        contentHash: contentHash,
+        mtime: stat.mtime,
+        ctime: stat.ctime,
+        size: stat.size
+      });
+    } catch (e) {
+      console.warn(`[FastNoteSync] 跳过异常配置文件 ${path}: ${e.message}`);
+      dump(`Error processing config file ${path}:`, e);
+    }
   }
 
   // 加入 LocalStorage 同步项

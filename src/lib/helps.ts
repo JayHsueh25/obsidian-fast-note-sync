@@ -383,21 +383,35 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
  */
 async function readRange(app: App, path: string, offset: number, length: number): Promise<ArrayBuffer> {
   const url = app.vault.adapter.getResourcePath(path)
-  const response = await fetch(url, {
-    headers: {
-      'Range': `bytes=${offset}-${offset + length - 1}`
-    }
-  })
+  
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 秒超时
 
-  if (response.status === 206 || response.status === 200) {
-    const buffer = await response.arrayBuffer()
-    // 如果服务器不支持 206 返回了 200 (全量)，则在此处截取 (Slice if server returned 200 instead of 206)
-    if (response.status === 200 && buffer.byteLength > length) {
-      return buffer.slice(offset, offset + length)
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Range': `bytes=${offset}-${offset + length - 1}`
+      },
+      signal: controller.signal
+    })
+
+    if (response.status === 206 || response.status === 200) {
+      const buffer = await response.arrayBuffer()
+      // 如果服务器不支持 206 返回了 200 (全量)，则在此处截取 (Slice if server returned 200 instead of 206)
+      if (response.status === 200 && buffer.byteLength > length) {
+        return buffer.slice(offset, offset + length)
+      }
+      return buffer
     }
-    return buffer
+    throw new Error(`Failed to read file range via fetch: ${response.status}`)
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Read file range timeout (5s) for: ${path}`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
-  throw new Error(`Failed to read file range via fetch: ${response.status}`)
 }
 
 /**
@@ -416,13 +430,23 @@ export const hashFileAsync = async function (app: App, path: string): Promise<st
     const buffer = await app.vault.adapter.readBinary(path)
     view = new Uint8Array(buffer)
   } else {
-    // 大文件优化：使用 fetch + Range 仅读取前 5MB 和后 5MB (Large file optimization: fetch first/last 5MB only)
-    const head = await readRange(app, path, 0, FILE_HASH_SLICE_SIZE)
-    const tail = await readRange(app, path, size - FILE_HASH_SLICE_SIZE, FILE_HASH_SLICE_SIZE)
+    // 大文件优化：优先使用 fetch + Range 仅读取前 5MB 和后 5MB (Large file optimization: try fetch first/last 5MB)
+    try {
+      const head = await readRange(app, path, 0, FILE_HASH_SLICE_SIZE)
+      const tail = await readRange(app, path, size - FILE_HASH_SLICE_SIZE, FILE_HASH_SLICE_SIZE)
 
-    view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
-    view.set(new Uint8Array(head), 0)
-    view.set(new Uint8Array(tail), FILE_HASH_SLICE_SIZE)
+      view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
+      view.set(new Uint8Array(head), 0)
+      view.set(new Uint8Array(tail), FILE_HASH_SLICE_SIZE)
+    } catch (e) {
+      dump(`hashFileAsync: readRange failed or timeout, falling back to full read for ${path}: ${e.message}`);
+      // 兜底方案：加载完整文件内容 (Fallback: read full file)
+      const buffer = await app.vault.adapter.readBinary(path)
+      const fullView = new Uint8Array(buffer)
+      view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
+      view.set(fullView.subarray(0, FILE_HASH_SLICE_SIZE), 0)
+      view.set(fullView.subarray(size - FILE_HASH_SLICE_SIZE), FILE_HASH_SLICE_SIZE)
+    }
   }
 
   return await computeRollingHash(view)
