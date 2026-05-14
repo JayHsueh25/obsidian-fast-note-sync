@@ -368,11 +368,17 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
   if (size <= FILE_HASH_THRESHOLD) {
     view = new Uint8Array(buffer)
   } else {
-    // 大文件优化：拼接前 50MB 和后 50MB (Optimize for large files: slice first and last 50MB)
+    // 大文件优化：拼接前 5MB 和后 5MB (Optimize for large files: slice first and last 5MB)
     view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
     const fullView = new Uint8Array(buffer)
-    view.set(fullView.subarray(0, FILE_HASH_SLICE_SIZE), 0)
-    view.set(fullView.subarray(size - FILE_HASH_SLICE_SIZE), FILE_HASH_SLICE_SIZE)
+
+    // 添加边界保护：确保 subarray 不会超出 view 的预留空间 (Boundary protection: ensure subarray fits in view)
+    const headLen = Math.min(size, FILE_HASH_SLICE_SIZE)
+    const tailLen = Math.min(size, FILE_HASH_SLICE_SIZE)
+    const tailStart = Math.max(0, size - tailLen)
+
+    view.set(fullView.subarray(0, headLen), 0)
+    view.set(fullView.subarray(tailStart, size), FILE_HASH_SLICE_SIZE)
   }
 
   return await computeRollingHash(view)
@@ -396,10 +402,11 @@ async function readRange(app: App, path: string, offset: number, length: number)
     })
 
     if (response.status === 206 || response.status === 200) {
-      const buffer = await response.arrayBuffer()
-      // 如果服务器不支持 206 返回了 200 (全量)，则在此处截取 (Slice if server returned 200 instead of 206)
-      if (response.status === 200 && buffer.byteLength > length) {
-        return buffer.slice(offset, offset + length)
+      let buffer = await response.arrayBuffer()
+      // 如果服务器不支持 206 返回了 200 (全量)，或返回数据量超过预期，则进行截取以保持一致性
+      // If server doesn't support 206 (returns 200) or returns more data than expected, slice to maintain consistency
+      if (buffer.byteLength > length) {
+        return buffer.slice(0, length)
       }
       return buffer
     }
@@ -433,23 +440,35 @@ export const hashFileAsync = async function (app: App, path: string): Promise<st
     // 大文件优化：优先使用 fetch + Range 仅读取前 5MB 和后 5MB (Large file optimization: try fetch first/last 5MB)
     try {
       const head = await readRange(app, path, 0, FILE_HASH_SLICE_SIZE)
-      const tail = await readRange(app, path, size - FILE_HASH_SLICE_SIZE, FILE_HASH_SLICE_SIZE)
+      const tailOffset = Math.max(0, size - FILE_HASH_SLICE_SIZE)
+      const tail = await readRange(app, path, tailOffset, FILE_HASH_SLICE_SIZE)
 
       view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
-      view.set(new Uint8Array(head), 0)
-      view.set(new Uint8Array(tail), FILE_HASH_SLICE_SIZE)
+      const headUint8 = new Uint8Array(head)
+      const tailUint8 = new Uint8Array(tail)
+
+      // 强制截断至标准切片大小，防止 Uint8Array.set 越界 (Force slice to standard size to prevent RangeError)
+      view.set(headUint8.subarray(0, Math.min(headUint8.length, FILE_HASH_SLICE_SIZE)), 0)
+      view.set(tailUint8.subarray(0, Math.min(tailUint8.length, FILE_HASH_SLICE_SIZE)), FILE_HASH_SLICE_SIZE)
     } catch (e) {
       dump(`hashFileAsync: readRange failed or timeout, falling back to full read for ${path}: ${e.message}`);
       // 兜底方案：加载完整文件内容 (Fallback: read full file)
       const buffer = await app.vault.adapter.readBinary(path)
       const fullView = new Uint8Array(buffer)
       view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
-      view.set(fullView.subarray(0, FILE_HASH_SLICE_SIZE), 0)
-      view.set(fullView.subarray(size - FILE_HASH_SLICE_SIZE), FILE_HASH_SLICE_SIZE)
+
+      const headLen = Math.min(size, FILE_HASH_SLICE_SIZE)
+      const tailLen = Math.min(size, FILE_HASH_SLICE_SIZE)
+      const tailStart = Math.max(0, size - tailLen)
+
+      view.set(fullView.subarray(0, headLen), 0)
+      view.set(fullView.subarray(tailStart, size), FILE_HASH_SLICE_SIZE)
     }
   }
 
-  return await computeRollingHash(view)
+  const hash = await computeRollingHash(view)
+  dump(`[HashFile] [Calc] path=${path} size=${formatFileSize(size)} hash=${hash}`)
+  return hash
 }
 
 /**
@@ -740,6 +759,60 @@ export function showSyncNotice(message: string, duration: number = 2500): SyncNo
  * Token 管理 (Token Management) - 移除加密以增强兼容性
  * =============================================================================
  */
+
+/**
+ * 保存 ApiUrl：直接使用 LocalStorage 存储 (Save ApiUrl to LocalStorage)
+ */
+export async function saveApiUrl(app: App, plugin: FastSync, apiUrl: string): Promise<void> {
+  plugin.localStorageManager.setMetadata("apiUrl", apiUrl)
+}
+
+/**
+ * 获取 ApiUrl：从 LocalStorage 获取 (Load ApiUrl from LocalStorage)
+ */
+export async function loadApiUrl(app: App, plugin: FastSync, dataJsonApi?: string): Promise<string> {
+  const apiUrl = plugin.localStorageManager.getMetadata("apiUrl")
+  if (!apiUrl && dataJsonApi) {
+    return dataJsonApi
+  }
+  return (apiUrl as string) || ""
+}
+
+/**
+ * 保存 Vault：直接使用 LocalStorage 存储 (Save Vault name to LocalStorage)
+ */
+export async function saveVault(app: App, plugin: FastSync, vault: string): Promise<void> {
+  plugin.localStorageManager.setMetadata("vault", vault)
+}
+
+/**
+ * 获取 Vault：从 LocalStorage 获取 (Load Vault name from LocalStorage)
+ */
+export async function loadVault(app: App, plugin: FastSync, dataJsonVault?: string): Promise<string> {
+  const vault = plugin.localStorageManager.getMetadata("vault")
+  if (!vault && dataJsonVault) {
+    return dataJsonVault
+  }
+  return (vault as string) || ""
+}
+
+/**
+ * 保存 自动重定向设置：直接使用 LocalStorage 存储 (Save AutoRedirect setting to LocalStorage)
+ */
+export async function saveAutoRedirect(app: App, plugin: FastSync, enabled: boolean): Promise<void> {
+  plugin.localStorageManager.setMetadata("autoRedirectEnabled", enabled)
+}
+
+/**
+ * 获取 自动重定向设置：从 LocalStorage 获取 (Load AutoRedirect setting from LocalStorage)
+ */
+export async function loadAutoRedirect(app: App, plugin: FastSync, dataJsonEnabled?: boolean): Promise<boolean> {
+  const enabled = plugin.localStorageManager.getMetadata("autoRedirectEnabled")
+  if (enabled === "" && dataJsonEnabled !== undefined) {
+    return dataJsonEnabled
+  }
+  return enabled === true || enabled === "true"
+}
 
 /**
  * 保存 ApiToken：直接使用 LocalStorage 明文存储

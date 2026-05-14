@@ -1,6 +1,6 @@
 import { Plugin, WorkspaceLeaf, Platform, addIcon, App } from "obsidian";
 
-import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, loadApiToken, saveApiToken } from "./lib/helps";
+import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, loadApiToken, saveApiToken, loadApiUrl, saveApiUrl, loadVault, saveVault, loadAutoRedirect, saveAutoRedirect } from "./lib/helps";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { ShareIndicatorManager } from "./lib/share_indicator_manager";
@@ -466,13 +466,20 @@ export default class FastSync extends Plugin {
     const apiToken = await loadApiToken(this.app, this, data?.apiToken);
     this.settings.apiToken = apiToken;
 
-    // 如果原始 data.json 中存有 apiToken，标记迁移以触发后续的清理保存
-    if (data && data.apiToken) {
-      hasMigration = true;
-    }
+    // 2. 处理 API URL 和 Vault (LocalStorage > data.json)
+    const api = await loadApiUrl(this.app, this, data?.api);
+    this.settings.api = api;
 
-    if (!this.settings.vault) {
-      this.settings.vault = this.app.vault.getName()
+    const vault = await loadVault(this.app, this, data?.vault);
+    this.settings.vault = vault || this.app.vault.getName();
+
+    // 3. 处理自动重定向设置 (LocalStorage > data.json)
+    const autoRedirect = await loadAutoRedirect(this.app, this, data?.autoRedirectEnabled);
+    this.settings.autoRedirectEnabled = autoRedirect;
+
+    // 如果原始 data.json 中存有敏感信息或环境特定信息，标记迁移以触发后续的清理保存
+    if (data && (data.apiToken || data.api || data.vault || data.autoRedirectEnabled !== undefined)) {
+      hasMigration = true;
     }
 
     // 数据迁移与清理：统一规则格式为 JSON
@@ -603,16 +610,19 @@ export default class FastSync extends Plugin {
 
     this.localStorageManager.setInternalExcludes(internalRules);
 
-    // 从 settings 副本中移除 apiToken，确保其不被存入 data.json
-    const { apiToken, ...restSettings } = this.settings;
+    // 从 settings 副本中移除 apiToken, api, vault, autoRedirectEnabled，确保其不被存入 data.json
+    const { apiToken, api, vault, autoRedirectEnabled, ...restSettings } = this.settings;
 
     const settingsToSave = {
       ...restSettings,
       syncExcludeFolders: stringifyRules(externalRules)
     };
 
-    // 将 apiToken 独立存入安全存储 (SecretStorage 或 LocalStorage)
+    // 将敏感/环境特定设置存入 LocalStorage
     await saveApiToken(this.app, this, apiToken || "");
+    await saveApiUrl(this.app, this, api || "");
+    await saveVault(this.app, this, vault || "");
+    await saveAutoRedirect(this.app, this, autoRedirectEnabled || false);
 
     await this.saveData(settingsToSave)
   }

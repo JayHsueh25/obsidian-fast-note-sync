@@ -494,7 +494,15 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
               const baseHash = plugin.fileHashManager.getPathHash(file.path);
               let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
               if (contentHash === null) {
-                contentHash = await hashContentAsync(await plugin.app.vault.read(file));
+                try {
+                  contentHash = await hashContentAsync(await plugin.app.vault.read(file));
+                  dump(`[HashNote] [Calc] path=${file.path} size=${formatFileSize(file.stat.size)} hash=${contentHash}`)
+                } catch (e) {
+                  console.warn(`[FastNoteSync] 哈希笔记失败，跳过: ${file.path}`, e);
+                  continue;
+                }
+              } else {
+                dump(`[HashNote] [Cache] path=${file.path} size=${formatFileSize(file.stat.size)} hash=${contentHash}`)
               }
 
               let item = {
@@ -533,8 +541,16 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
               const baseHash = plugin.fileHashManager.getPathHash(file.path);
               let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
               if (contentHash === null) {
-                contentHash = await hashFileAsync(plugin.app, file.path);
-                logMemorySnapshot(`after scan hash ${file.path}`);
+                try {
+                  contentHash = await hashFileAsync(plugin.app, file.path);
+                  logMemorySnapshot(`after scan hash ${file.path}`);
+                  // 注意：hashFileAsync 内部已经带了 [Calc] 类型的 dump，此处不再重复
+                } catch (e) {
+                  console.warn(`[FastNoteSync] 哈希附件失败，跳过: ${file.path}`, e);
+                  continue;
+                }
+              } else {
+                dump(`[HashFile] [Cache] path=${file.path} size=${formatFileSize(file.stat.size)} hash=${contentHash}`)
               }
 
               let item = {
@@ -667,7 +683,15 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
         let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
         if (contentHash === null) {
-          contentHash = await hashFileAsync(plugin.app, path);
+          try {
+            contentHash = await hashFileAsync(plugin.app, path);
+            // 注意：hashFileAsync 内部已经带了 [Calc] 类型的 dump
+          } catch (e) {
+            console.warn(`[FastNoteSync] 哈希配置失败，跳过: ${path}`, e);
+            continue;
+          }
+        } else {
+          dump(`[HashConfig] [Cache] path=${path} size=${formatFileSize(stat.size)} hash=${contentHash}`)
         }
 
         configs.push({
