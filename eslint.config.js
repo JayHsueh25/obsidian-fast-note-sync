@@ -3,6 +3,9 @@ import { defineConfig } from "eslint/config";
 import obsidianmd from "eslint-plugin-obsidianmd";
 
 export default defineConfig([
+  {
+    ignores: ["src/lib/helps_obsidian_bypass.ts"],
+  },
   ...obsidianmd.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],

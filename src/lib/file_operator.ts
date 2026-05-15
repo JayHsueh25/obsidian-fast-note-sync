@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, normalizePath, Platform } from "obsidian";
 
 import { ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, getPluginDir, dump, sleep, dumpTable, isPathExcluded, getSafeCtime, isLargeBinarySyncRisk, describeBinarySyncLimit, showSyncNotice, logMemorySnapshot, hashFileAsync, vaultDelete } from "./helps";
+import { hashContent, hashArrayBuffer, getPluginDir, dump, sleep, isPathExcluded, getSafeCtime, isLargeBinarySyncRisk, describeBinarySyncLimit, showSyncNotice, logMemorySnapshot, hashFileAsync, vaultDelete } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import { HttpApiService } from "./api";
@@ -396,7 +396,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       }
 
       // 打印上传信息表格
-      dumpTable([
+      dump([
         {
           操作: "文件上传",
           路径: data.path,
@@ -762,7 +762,7 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
   dump(`Receive file chunk download: `, data.path, data.sessionId, `totalChunks: ${data.totalChunks}`)
 
   // 打印下载信息表格
-  dumpTable([
+  dump([
     {
       操作: "文件下载",
       路径: data.path,

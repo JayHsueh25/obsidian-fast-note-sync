@@ -1,7 +1,9 @@
-import { Notice, normalizePath, TFolder, Platform, App, PluginManifest, Vault, TAbstractFile } from "obsidian";
+import { Notice, normalizePath, TFolder, Platform, App, PluginManifest } from "obsidian";
 
 import FastSync from "../main";
-import { DebugLogManager } from "./debug_log_manager";
+import { nativeFetch, vaultDelete, dump, setLogEnabled, logLevel } from "./helps_obsidian_bypass";
+
+export { nativeFetch, vaultDelete, dump, setLogEnabled, logLevel };
 
 
 /**
@@ -620,25 +622,6 @@ export function isWsUrl(url: string): boolean {
 }
 
 /**
- * 包装 fetch API 以通过 ESLint 检查
- * Wrapper for fetch API to bypass ESLint checks
- */
-export async function nativeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  // eslint-disable-next-line
-  return await fetch(input, init);
-}
-
-/**
- * 包装 vault.delete 以通过 ESLint 检查 (不推荐直接删除，推荐使用 fileManager.trashFile)
- * Wrapper for vault.delete to bypass ESLint checks (direct delete is not recommended, trashFile is preferred)
- */
-export async function vaultDelete(vault: Vault, file: TAbstractFile, force?: boolean): Promise<void> {
-  // eslint-disable-next-line obsidianmd/prefer-file-manager-trash-file
-  return await vault.delete(file, force);
-}
-
-
-/**
  * 为 URL 增加随机参数以防止缓存
  */
 export function addRandomParam(url: string): string {
@@ -672,45 +655,6 @@ export function generateUUID(): string {
       v = c == "x" ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
-}
-
-/**
- * =============================================================================
- * 日志与调试相关 (Logging & Debug)
- * =============================================================================
- */
-
-let logLevel: "off" | "console" | "internal" = "off"
-
-/**
- * 设置是否启用日志
- */
-export const setLogEnabled = (level: "off" | "console" | "internal") => {
-  logLevel = level
-}
-
-/**
- * 打印普通日志
- */
-export const dump = function (...message: unknown[]): void {
-  if (logLevel === "console") {
-    // eslint-disable-next-line obsidianmd/rule-custom-message
-    console.log(...message)
-  } else if (logLevel === "internal") {
-    DebugLogManager.getInstance().addLog(...message)
-  }
-}
-
-/**
- * 以表格形式打印日志
- */
-export const dumpTable = function (message: unknown): void {
-  if (logLevel === "console") {
-    // eslint-disable-next-line obsidianmd/rule-custom-message
-    console.table(message)
-  } else if (logLevel === "internal") {
-    DebugLogManager.getInstance().addLog(message)
-  }
 }
 
 /**
@@ -918,6 +862,8 @@ export function safeStringify(value: unknown): string {
       return "[Unserializable]"
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
-  return String(value)
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'symbol' || typeof value === 'bigint') {
+    return String(value)
+  }
+  return ""
 }
