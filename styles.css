@@ -220,78 +220,186 @@
   padding-left: 1.5em;
 }
 
-.fast-note-sync-support-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-  border: 1px solid var(--background-modifier-border);
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-}
-.fast-note-sync-support-table th,
-.fast-note-sync-support-table td {
-  border: 1px solid var(--background-modifier-border);
-  padding: 10px;
-  text-align: center;
-  vertical-align: middle;
-  font-size: var(--font-ui-smaller);
-}
-.fast-note-sync-support-table .support-separator {
-  width: 40px;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-}
-.fast-note-sync-support-table .ko-fi-logo-large {
-  width: 200px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
-.fast-note-sync-support-table .wx-pay-logo-large {
-  width: 80px;
-  height: auto;
-  border-radius: 4px;
-  display: block;
-  margin: 0 auto;
+/* --- Sponsorship & Support Redesign --- */
+.fns-support-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px 0;
 }
 
-.supporters-list-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px dashed var(--background-modifier-border);
-}
-.supporters-list-section .supporters-list-title {
-  font-weight: bold;
-  font-size: var(--font-ui-medium);
-  margin-bottom: 4px;
-}
-.supporters-list-section .supporters-list-title a {
-  color: var(--text-accent);
-  text-decoration: none;
-}
-.supporters-list-section .supporters-list-title a:hover {
-  text-decoration: underline;
-}
-.supporters-list-section .supporters-list-subtitle {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-  margin-bottom: 10px;
-}
-.supporters-list-section .supporters-list-content {
-  font-size: var(--font-ui-smaller);
+.fns-support-header-desc {
+  font-size: var(--font-ui-small);
   color: var(--text-muted);
+  line-height: 1.6;
+  padding: 0 4px;
+}
+
+.fns-support-cards-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 15px;
-  word-break: break-all;
+  gap: 16px;
+  width: 100%;
 }
-.supporters-list-section .supporters-list-content a {
-  color: var(--text-accent);
-  text-decoration: underline;
+
+.is-mobile .fns-support-cards-container {
+  flex-direction: column;
 }
-.supporters-list-section .supporters-list-content a:hover {
+
+.fns-support-card {
+  flex: 1;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+}
+
+.fns-support-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  background-color: var(--background-secondary-alt);
+}
+
+.fns-support-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0px;
+}
+
+.fns-support-card-icon {
+  font-size: 16px;
+}
+
+.fns-support-card-title {
+  font-weight: 600;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+
+.fns-support-card-body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 80px;
+  padding: 8px 0;
+}
+
+.fns-support-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none !important;
+}
+
+.fns-support-img-kofi {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  border-radius: 8px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  margin: 0 auto;
+  display: block;
+}
+
+.fns-wechat-qr-wrapper {
+  background-color: white;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+  position: relative;
+  z-index: 1;
+  transform-origin: top;
+}
+
+.fns-wechat-qr-wrapper:hover {
+  transform: scale(1.5);
+  z-index: 100;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fns-support-img-wechat {
+  width: 80px;
+  height: 80px;
+  display: block;
+}
+
+/* Supporters List Card */
+.fns-supporters-list-card {
+  background-color: var(--background-secondary-alt);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fns-supporters-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fns-supporters-icon {
+  font-size: 18px;
+}
+
+.fns-supporters-title {
+  font-weight: 600;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+
+.fns-supporters-content {
+  display: flex;
+  align-items: center;
+}
+
+.fns-supporters-github-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  color: var(--text-normal);
+  text-decoration: none !important;
+  font-size: var(--font-ui-small);
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.fns-supporters-github-link:hover {
+  background-color: var(--interactive-accent);
+  color: white;
+  border-color: var(--interactive-accent);
+}
+
+.fns-github-icon {
+  display: flex;
+  align-items: center;
   opacity: 0.8;
 }
+
+.fns-supporters-github-link:hover .fns-github-icon {
+  opacity: 1;
+}
+
 
 .fast-note-sync-settings-debug {
   margin-top: var(--size-4-2);

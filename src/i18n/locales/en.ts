@@ -144,6 +144,7 @@ export default {
   "setting.support.wechat": "China Region (WeChat Scan to Donate)",
   "setting.support.or": "or",
   "setting.support.list": "Supporter List",
+  "setting.support.list_link": "View Full Supporters List on GitHub",
   "setting.support.log": "Logging",
   "setting.support.log_desc": "Select the log output method. Once enabled, it is recommended to select 'Internal to Plugin' on mobile for easier log viewing.",
   "setting.support.log_off": "Off",

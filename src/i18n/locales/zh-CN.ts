@@ -144,6 +144,7 @@ export default {
   "setting.support.wechat": "中国地区 ( 微信扫码打赏 )",
   "setting.support.or": "或",
   "setting.support.list": "已支持名单",
+  "setting.support.list_link": "在 GitHub 上查看完整支持名单",
   "setting.support.log": "日志记录",
   "setting.support.log_desc": "选择日志输出方式。开启后，建议在手机端选择“插件内部”以方便查看日志。",
   "setting.support.log_off": "关闭",
