@@ -41,10 +41,16 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
     const [clients, setClients] = React.useState<WSClient[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
+    const isAuth = plugin.websocket?.isAuth;
+
     const loadClients = async () => {
+        if (!isAuth) {
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         const data = await plugin.api.getWSClients();
-        setClients(data);
+        setClients(data || []);
         setIsLoading(false);
     };
 
@@ -68,7 +74,7 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
                     <button 
                         className="clickable-icon fns-ws-clients-refresh-btn" 
                         onClick={() => { void loadClients(); }} 
-                        disabled={isLoading}
+                        disabled={isLoading || !isAuth}
                         aria-label={$("ui.common.refresh")}
                     >
                         <LucideIcon icon="refresh-cw" size={16} className={isLoading ? "is-spinning" : ""} />
@@ -79,7 +85,16 @@ const WSClientsView = ({ plugin }: { plugin: FastSync }) => {
             <div className="fns-ws-clients-list">
                 {clients.length === 0 ? (
                     <div className="fns-ws-clients-empty-state">
-                        {isLoading ? (
+                        {!isAuth ? (
+                            <div className="fns-empty-state fns-offline-state fns-padding-60 fns-text-center fns-muted-text">
+                                <div className="fns-margin-b-15 fns-opacity-6">
+                                    <LucideIcon icon="wifi-off" size={48} />
+                                </div>
+                                <div className="fns-font-lg">
+                                    {$("setting.remote.disconnected")}
+                                </div>
+                            </div>
+                        ) : isLoading ? (
                             <div className="fns-ws-clients-loading-indicator">
                                 <LucideIcon icon="loader-2" className="is-spinning" size={16} />
                                 <span>{$("ui.history.loading")}</span>

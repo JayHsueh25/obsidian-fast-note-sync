@@ -1080,7 +1080,7 @@
             &.fns-dot-attachment { background-color: #7C4DFF; }
             &.fns-dot-folder { background-color: #1E88E5; }
             &.fns-dot-config { background-color: #FF8A33; }
-            &.fns-dot-other { background-color: #999999; }
+            &.fns-dot-other { background-color: #999; }
             &.fns-dot-send { background-color: #FF8C00; }
             &.fns-dot-receive { background-color: #007BFF; }
           }
@@ -1401,7 +1401,7 @@
   z-index: 10001;
   width: 8px;
   height: 8px;
-  background-color: #999999;
+  background-color: #999;
   border-radius: 50%;
   border: 1.5px solid var(--background-primary);
   pointer-events: none;
@@ -3227,7 +3227,7 @@ body .suggestion-container {
   width: 100%;
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .fns-support-cards-container {
     grid-template-columns: 1fr;
   }
@@ -3248,7 +3248,7 @@ body .suggestion-container {
 
   &:hover {
     border-color: var(--interactive-accent);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
     transform: translateY(-2px);
     background-color: var(--background-secondary);
   }
@@ -3282,8 +3282,8 @@ body .suggestion-container {
   display: block;
   width: 100%;
   text-align: center;
-  text-decoration: none !important;
-  box-shadow: none !important;
+  text-decoration: none;
+  box-shadow: none;
 }
 
 .fns-support-img-kofi {
@@ -3291,7 +3291,7 @@ body .suggestion-container {
   max-width: 130px;
   height: auto;
   border-radius: 8px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 10%));
   margin: 0 auto;
   display: block;
   transition: transform 0.3s ease;
@@ -3308,7 +3308,7 @@ body .suggestion-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: zoom-in;
   position: relative;
@@ -3319,7 +3319,7 @@ body .suggestion-container {
 .fns-wechat-qr-wrapper:hover {
   transform: scale(1.8);
   z-index: 100;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 40%);
 }
 
 .fns-support-img-wechat {
@@ -3385,28 +3385,29 @@ body .suggestion-container {
   .fns-support-sort-group {
     display: flex;
     gap: 16px;
+
     button {
-      padding: 4px 4px;
+      padding: 4px;
       height: auto;
       min-height: 0;
       font-size: 11px;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      color: var(--text-muted) !important;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: var(--text-muted);
       cursor: pointer;
       transition: all 0.2s ease;
-      margin: 0 !important;
-      font-weight: 500 !important;
+      margin: 0;
+      font-weight: 500;
       position: relative;
 
       &.is-active {
-        color: var(--interactive-accent) !important;
-        font-weight: 600 !important;
+        color: var(--interactive-accent);
+        font-weight: 600;
       }
 
       &:hover:not(.is-active) {
-        color: var(--text-normal) !important;
+        color: var(--text-normal);
       }
 
       &:not(:last-child)::after {
@@ -3524,48 +3525,70 @@ body .suggestion-container {
 
   .fns-support-pager {
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 6px;
-    font-size: 10px;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--background-modifier-border-faint);
+    font-size: 11px;
     color: var(--text-faint);
-    opacity: 0.8;
 
-    button {
+    .fns-support-pager-controls {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 0;
-      width: 22px;
-      height: 22px;
-      min-height: 22px;
-      background: transparent !important;
-      border: 1px solid var(--background-modifier-border-faint) !important;
-      border-radius: 4px;
-      cursor: pointer;
-      box-shadow: none !important;
-      margin: 0 !important;
-      transition: all 0.2s;
+      gap: 16px;
+      color: var(--text-normal);
 
-      &:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        width: 26px;
+        height: 26px;
+        background: var(--background-secondary);
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        margin: 0;
+        box-shadow: none;
+
+        &:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        &:hover:not(:disabled) {
+          background-color: var(--background-modifier-hover);
+          border-color: var(--interactive-accent);
+          color: var(--interactive-accent);
+        }
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
       }
 
-      &:hover:not(:disabled) {
-        background-color: var(--background-modifier-hover) !important;
-        border-color: var(--background-modifier-border) !important;
-        color: var(--text-normal);
+      span {
+        min-width: 24px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 12px;
+        font-family: var(--font-monospace);
       }
     }
+  }
 
-    span {
-      min-width: 20px;
-      text-align: center;
-      font-weight: 600;
-      font-family: var(--font-monospace);
-    }
+  .fns-support-desc {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-faint);
+    opacity: 0.6;
+    font-style: italic;
   }
 
   .fns-support-loading, .fns-support-empty {
@@ -3605,3 +3628,19 @@ body .suggestion-container {
 }
 
 
+
+
+.fns-fast-tooltip {
+  position: fixed;
+  z-index: var(--layer-menu, 9999);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--shadow-s);
+  font-size: var(--font-ui-small, 13px);
+  pointer-events: none;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}

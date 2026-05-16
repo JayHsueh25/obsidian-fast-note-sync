@@ -467,7 +467,7 @@ export class SettingTab extends PluginSettingTab {
           const numValue = parseInt(value)
           if (!isNaN(numValue) && numValue >= 0) {
             this.plugin.settings.startupDelay = numValue
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
     )
@@ -480,7 +480,7 @@ export class SettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.updateSource || "github")
         .onChange(async (value: "github" | "cnb") => {
           this.plugin.settings.updateSource = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.update_source_desc"))
@@ -730,7 +730,7 @@ export class SettingTab extends PluginSettingTab {
             await rebuildAllHashes(this.plugin)
 
             // 保存设置
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
 
             showSyncNotice($("setting.debug.reset_all_success"))
 
@@ -768,7 +768,7 @@ export class SettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.logEnabled || "off")
         .onChange(async (value: "off" | "console" | "internal") => {
           this.plugin.settings.logEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.display() // 重新渲染以更新按钮显示状态
         }),
     )
@@ -789,7 +789,7 @@ export class SettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.networkLibrary)
         .onChange(async (value: "fetch" | "requestUrl") => {
           this.plugin.settings.networkLibrary = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.network_library_desc"))
@@ -800,7 +800,7 @@ export class SettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.debugRemoteUrls)
         .onChange(async (value) => {
           this.plugin.settings.debugRemoteUrls = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.debug_url_desc"))
@@ -813,7 +813,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.isShowNotice).onChange(async (value) => {
         if (value != this.plugin.settings.isShowNotice) {
           this.plugin.settings.isShowNotice = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.display()
         }
       }),
@@ -835,7 +835,7 @@ export class SettingTab extends PluginSettingTab {
               if (!isNaN(numValue) && numValue >= 0) {
                 this.plugin.settings.mobileToastTop = numValue
                 this.plugin.applyMobileToastTop()
-                await this.plugin.saveSettings()
+                await this.plugin.saveAndReloadServices()
               }
             })
           toastTopText = text
@@ -854,7 +854,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.showShareIcon).onChange(async (value) => {
         if (value != this.plugin.settings.showShareIcon) {
           this.plugin.settings.showShareIcon = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.plugin.shareIndicatorManager.regenerateCss()
         }
       }),
@@ -865,7 +865,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.showUpgradeBadge).onChange(async (value) => {
         if (value != this.plugin.settings.showUpgradeBadge) {
           this.plugin.settings.showUpgradeBadge = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.plugin.menuManager?.refreshUpgradeBadge()
             // 触发设置变更事件以通知 React 视图 / Trigger settings change event to notify React views
             this.app.workspace.trigger("fns:settings-change")
@@ -879,7 +879,7 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.showConcurrencyIndicator) {
           this.plugin.settings.showConcurrencyIndicator = value
           this.plugin.menuManager.refreshConcurrencyIndicator()
-          await this.plugin.saveSettings("showConcurrencyIndicator")
+          await this.plugin.saveAndReloadServices("showConcurrencyIndicator")
         }
       }),
     )
@@ -888,7 +888,7 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.debug.show_version")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showVersionInfo).onChange(async (value) => {
         this.plugin.settings.showVersionInfo = value
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.show_version_desc"))
@@ -905,7 +905,7 @@ export class SettingTab extends PluginSettingTab {
         .setDisabled(!Platform.isMobile)
         .onChange(async (value: string) => {
           this.plugin.settings.mobileStatusDotPosition = value as "hidden" | "top-right" | "top-left" | "bottom-right" | "bottom-left" | "menu-bar"
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.plugin.menuManager?.updateRibbonIcon(this.plugin.websocket.isAuth)
         }),
     )
@@ -939,7 +939,7 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.wsSettingChange = true
             this.plugin.settings.api = value
             this.plugin.localStorageManager.clearSyncTime()
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
     )
@@ -954,7 +954,7 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.wsSettingChange = true
             this.plugin.settings.apiToken = value
             this.plugin.localStorageManager.clearSyncTime()
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
     )
@@ -968,7 +968,7 @@ export class SettingTab extends PluginSettingTab {
           this.plugin.wsSettingChange = true
           this.plugin.settings.vault = value
           this.plugin.localStorageManager.clearSyncTime()
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.vault_name_desc"))
@@ -976,7 +976,7 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.remote.auto_redirect")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.autoRedirectEnabled).onChange(async (value) => {
         this.plugin.settings.autoRedirectEnabled = value
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.auto_redirect_desc"))
@@ -1166,7 +1166,7 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.syncEnabled) {
           this.plugin.settings.syncEnabled = value
           this.display()
-          await this.plugin.saveSettings("syncEnabled")
+          await this.plugin.saveAndReloadServices("syncEnabled")
         }
       }),
     )
@@ -1176,7 +1176,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.configSyncEnabled) {
           this.plugin.settings.configSyncEnabled = value
-          await this.plugin.saveSettings("configSyncEnabled")
+          await this.plugin.saveAndReloadServices("configSyncEnabled")
         }
       }),
     )
@@ -1214,7 +1214,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.binarySyncLimitEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.binarySyncLimitEnabled) {
           this.plugin.settings.binarySyncLimitEnabled = value
-          await this.plugin.saveSettings("binarySyncLimitEnabled")
+          await this.plugin.saveAndReloadServices("binarySyncLimitEnabled")
         }
       }),
     )
@@ -1224,7 +1224,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.pdfSyncEnabled) {
           this.plugin.settings.pdfSyncEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1236,7 +1236,7 @@ export class SettingTab extends PluginSettingTab {
           this.plugin.settings.concurrencyControlEnabled = value
           this.plugin.menuManager.refreshConcurrencyIndicator()
           this.display()
-          await this.plugin.saveSettings("concurrencyControlEnabled")
+          await this.plugin.saveAndReloadServices("concurrencyControlEnabled")
         }
       }),
     )
@@ -1252,7 +1252,7 @@ export class SettingTab extends PluginSettingTab {
             if (value != this.plugin.settings.maxConcurrentUploads) {
               this.plugin.settings.maxConcurrentUploads = value
               this.plugin.menuManager.refreshConcurrencyIndicator()
-              await this.plugin.saveSettings("maxConcurrentUploads")
+              await this.plugin.saveAndReloadServices("maxConcurrentUploads")
             }
           }),
       )
@@ -1263,7 +1263,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.offlineDeleteSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.offlineDeleteSyncEnabled) {
           this.plugin.settings.offlineDeleteSyncEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1273,7 +1273,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.manualSyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.manualSyncEnabled) {
           this.plugin.settings.manualSyncEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1283,7 +1283,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.readonlySyncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.readonlySyncEnabled) {
           this.plugin.settings.readonlySyncEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1293,7 +1293,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.autoPauseMinimized).onChange(async (value) => {
         if (value != this.plugin.settings.autoPauseMinimized) {
           this.plugin.settings.autoPauseMinimized = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1303,7 +1303,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.mobileBlurPauseEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.mobileBlurPauseEnabled) {
           this.plugin.settings.mobileBlurPauseEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
         }
       }),
     )
@@ -1316,7 +1316,7 @@ export class SettingTab extends PluginSettingTab {
       () => parseRules(this.plugin.settings.syncExcludeFolders),
       async (rules) => {
         this.plugin.settings.syncExcludeFolders = JSON.stringify(rules)
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       },
       true,
       $("ui.button.add_rule"),
@@ -1332,7 +1332,7 @@ export class SettingTab extends PluginSettingTab {
       () => parseRules(this.plugin.settings.syncExcludeExtensions),
       async (rules) => {
         this.plugin.settings.syncExcludeExtensions = JSON.stringify(rules)
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       },
       false,
       $("ui.button.add_rule"),
@@ -1347,7 +1347,7 @@ export class SettingTab extends PluginSettingTab {
       () => parseRules(this.plugin.settings.syncExcludeWhitelist),
       async (rules) => {
         this.plugin.settings.syncExcludeWhitelist = JSON.stringify(rules)
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       },
       true,
       $("ui.button.add_rule"),
@@ -1363,7 +1363,7 @@ export class SettingTab extends PluginSettingTab {
       () => parseRules(this.plugin.settings.configSyncOtherDirs),
       async (rules) => {
         this.plugin.settings.configSyncOtherDirs = JSON.stringify(rules)
-        await this.plugin.saveSettings()
+        await this.plugin.saveAndReloadServices()
       },
       false,
       $("ui.button.add_dir"),
@@ -1381,7 +1381,7 @@ export class SettingTab extends PluginSettingTab {
           const numValue = parseInt(value)
           if (!isNaN(numValue) && numValue >= 0) {
             this.plugin.settings.syncUpdateDelay = numValue
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
     )
@@ -1398,7 +1398,7 @@ export class SettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.offlineSyncStrategy || "")
           .onChange(async (value) => {
             this.plugin.settings.offlineSyncStrategy = value
-            await this.plugin.saveSettings("offlineSyncStrategy")
+            await this.plugin.saveAndReloadServices("offlineSyncStrategy")
             this.plugin.websocket.sendClientInfo()
           }),
       )
@@ -1410,7 +1410,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.cloudPreviewEnabled) {
           this.plugin.settings.cloudPreviewEnabled = value
-          await this.plugin.saveSettings()
+          await this.plugin.saveAndReloadServices()
           this.display()
         }
       }),
@@ -1422,7 +1422,7 @@ export class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
           if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
             this.plugin.settings.cloudPreviewTypeRestricted = value
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
       )
@@ -1435,7 +1435,7 @@ export class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
               this.plugin.settings.cloudPreviewRemoteUrl = value
-              await this.plugin.saveSettings()
+              await this.plugin.saveAndReloadServices()
             }
           })
           .inputEl.addClass("fast-note-sync-remote-url-area"),
@@ -1448,7 +1448,7 @@ export class SettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
           if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
             this.plugin.settings.cloudPreviewAutoDeleteLocal = value
-            await this.plugin.saveSettings()
+            await this.plugin.saveAndReloadServices()
           }
         }),
       )

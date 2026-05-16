@@ -148,29 +148,33 @@ export class HttpApiService {
 
         const base = urlToProbe.replace(/\/+$/, "");
 
-        // 如果未开启自动重定向检测，使用标准请求检查健康状态
-        if (!this.plugin.settings.autoRedirectEnabled) {
-            try {
-                const { status } = await this.request("/api/health", { method: "GET" });
-                // 2xx 表示健康，404 表示旧版服务端（也允许连接）
-                const isOk = (status >= 200 && status < 300) || status === 404;
-                if (isOk) {
-                    this.plugin.updateRuntimeApi(base);
-                }
-                return isOk;
-            } catch {
-                this.plugin.updateRuntimeApi(base);
-                return false;
-            }
-        }
-
-        const probeUrl = addRandomParam(base + "/api/health");
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 3000);
 
         try {
+            // 如果未开启自动重定向检测，使用标准请求检查健康状态
+            if (!this.plugin.settings.autoRedirectEnabled) {
+                try {
+                    const { status } = await this.request("/api/health", { method: "GET", signal: controller.signal });
+                    // 2xx 表示健康，404 表示旧版服务端（也允许连接）
+                    const isOk = (status >= 200 && status < 300) || status === 404;
+                    if (isOk) {
+                        this.plugin.updateRuntimeApi(base);
+                    }
+                    return isOk;
+                } catch {
+                    this.plugin.updateRuntimeApi(base);
+                    return false;
+                }
+            }
+
+            const probeUrl = addRandomParam(base + "/api/health");
+
             // 开启了自动重定向检测：使用 fetch 探测以获取 301/302 后的最终路径
             const res = await nativeFetch(probeUrl, {
                 method: 'GET',
                 redirect: 'follow',
+                signal: controller.signal
             });
             if (res.url) {
                 dump("probeApiRedirect", res.url);
@@ -193,9 +197,11 @@ export class HttpApiService {
             }
         } catch (e) {
             // 即使失败，也确保 runApi 有值（回退到探测的 base）
-            console.error("probeApiRedirect error:", e);
+            console.error("probeApiRedirect error/timeout:", e);
             this.plugin.updateRuntimeApi(base);
             return false;
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     }
 
@@ -296,21 +302,27 @@ export class HttpApiService {
         }
 
         if (networkLibrary === 'requestUrl') {
-            // Obsidian's requestUrl doesn't natively support AbortSignal in older versions,
-            // but we check for it to be future-proof or just let it run.
-            const response = await requestUrl({
+            const requestPromise = requestUrl({
                 url: url,
                 method: options.method,
                 headers: headers,
                 body: options.body,
                 throw: false
-            });
-
-            return {
+            }).then(response => ({
                 status: response.status,
                 json: response.json as unknown,
                 finalUrl: (response as unknown as { url?: string }).url || url
-            };
+            }));
+
+            if (options.signal) {
+                const timeoutPromise = new Promise<{ status: number, json: unknown, finalUrl: string }>((_, reject) => {
+                    options.signal!.addEventListener('abort', () => reject(new Error('Network request timeout')));
+                    if (options.signal!.aborted) reject(new Error('Network request timeout'));
+                });
+                return await Promise.race([requestPromise, timeoutPromise]);
+            }
+
+            return await requestPromise;
         } else {
             const fetchOptions: RequestInit = {
                 method: options.method,
@@ -870,6 +882,7 @@ export class HttpApiService {
      * 获取支持记录列表
      */
     async getSupportRecordsPage(page: number = 1, pageSize: number = 15, sortBy: string = "amount", sortOrder: string = "desc"): Promise<{ list: SupportRecord[], pager: SupportPager }> {
+
         const params = new URLSearchParams({
             page: page.toString(),
             pageSize: pageSize.toString(),
@@ -880,9 +893,13 @@ export class HttpApiService {
 
         const endpoint = `/api/support?${params.toString()}`;
 
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 2000);
+
         try {
             const { status, json } = await this.request(endpoint, {
-                method: "GET"
+                method: "GET",
+                signal: controller.signal
             });
 
             if (status !== 200) {
@@ -899,8 +916,10 @@ export class HttpApiService {
                 pager: res.data?.pager || { page, pageSize, totalRows: 0 }
             };
         } catch (e) {
-            console.error("getSupportRecordsPage error:", e);
+            dump("getSupportRecordsPage error:", e);
             throw e;
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     }
 }

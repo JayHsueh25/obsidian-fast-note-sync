@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { KofiImage, WXImage } from "src/lib/icons";
 import { dump, showSyncNotice } from "src/lib/helps";
+import { KofiImage, WXImage } from "src/lib/icons";
+import { createPortal } from "react-dom";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
 
 import { UserDTO, SupportRecord, SupportPager } from "../lib/api";
-import { $, getLocale } from "../i18n/lang";
 import { LucideIcon } from "./note-history/lucide-icon";
+import { $, getLocale } from "../i18n/lang";
 
 
 async function getClipboardContent(plugin: FastSync): Promise<void> {
@@ -20,7 +21,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
     plugin.clipboardReadTip = tip
 
     plugin.localStorageManager.clearSyncTime()
-    await plugin.saveSettings()
+    await plugin.saveAndReloadServices()
     plugin.settingTab.display()
 
     window.setTimeout(() => {
@@ -33,7 +34,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
   const clipboardReadTipTipSave = async (tip: string) => {
     plugin.clipboardReadTip = tip
 
-    await plugin.saveSettings()
+    await plugin.saveAndReloadServices()
     plugin.settingTab.display()
 
     window.setTimeout(() => {
@@ -197,23 +198,31 @@ const SupportList = ({ plugin }: { plugin: FastSync }) => {
   const [pager, setPager] = useState<SupportPager>({ page: 1, pageSize: 10, totalRows: 0 });
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("amount_3m");
-  const [hoverTooltip, setHoverTooltip] = useState<{text: string, x: number, y: number, isMobile: boolean} | null>(null);
+  const [hoverTooltip, setHoverTooltip] = useState<{ text: string, x: number, y: number, isMobile: boolean } | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchRecords = useCallback(async (page = 1, sort = sortBy) => {
+    if (!plugin.settings.api) {
+      setLoading(false);
+      setFetchError(true);
+      return;
+    }
     setLoading(true);
+    setFetchError(false);
     try {
       const data = await plugin.api.getSupportRecordsPage(page, 10, sort, "desc");
       setRecords(data.list);
       setPager(data.pager);
     } catch (err) {
       dump("Failed to fetch support records:", err);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
   }, [plugin, sortBy]);
 
   useEffect(() => {
-    fetchRecords(1, sortBy);
+    void fetchRecords(1, sortBy);
   }, [fetchRecords, sortBy, getLocale()]);
 
   const getInitials = (name: string) => {
@@ -244,44 +253,55 @@ const SupportList = ({ plugin }: { plugin: FastSync }) => {
           <LucideIcon icon="trophy" size={16} />
           <span className="fns-supporters-title">
             {$("setting.support.list")}
-            <span className="fns-supporters-range">
-              ({sortBy === 'amount_3m' ? $("setting.support.range_3m") : $("setting.support.range_all")})
-            </span>
+            {plugin.settings.api && !fetchError && (
+              <span className="fns-supporters-range">
+                ({sortBy === 'amount_3m' ? $("setting.support.range_3m") : $("setting.support.range_all")})
+              </span>
+            )}
           </span>
         </div>
-        <div className="fns-support-controls">
-          <div className="fns-support-sort-group">
-            <button 
-              className={sortBy === 'amount_3m' ? 'is-active' : ''} 
-              onClick={() => setSortBy('amount_3m')}
-            >
-              {$("setting.support.sort_3m")}
-            </button>
-            <button 
-              className={sortBy === 'amount' ? 'is-active' : ''} 
-              onClick={() => setSortBy('amount')}
-            >
-              {$("setting.support.sort_amount")}
-            </button>
-            <button 
-              className={sortBy === 'time' ? 'is-active' : ''} 
-              onClick={() => setSortBy('time')}
-            >
-              {$("setting.support.sort_time")}
-            </button>
+        {plugin.settings.api && !fetchError && (
+          <div className="fns-support-controls">
+            <div className="fns-support-sort-group">
+              <button
+                className={sortBy === 'amount_3m' ? 'is-active' : ''}
+                onClick={() => setSortBy('amount_3m')}
+              >
+                {$("setting.support.sort_3m")}
+              </button>
+              <button
+                className={sortBy === 'amount' ? 'is-active' : ''}
+                onClick={() => setSortBy('amount')}
+              >
+                {$("setting.support.sort_amount")}
+              </button>
+              <button
+                className={sortBy === 'time' ? 'is-active' : ''}
+                onClick={() => setSortBy('time')}
+              >
+                {$("setting.support.sort_time")}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {records.length === 0 ? (
+      {fetchError ? (
+        <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md" target="_blank" rel="noreferrer" className="fns-supporters-github-link">
+          <span className="fns-github-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          </span>
+          <span>{$("setting.support.list_link")}</span>
+        </a>
+      ) : records.length === 0 ? (
         <div className="fns-support-empty">{$("setting.support.empty")}</div>
       ) : (
         <>
           <div className="fns-supporters-container">
             {records.map((record, idx) => (
-              <div 
-                key={idx} 
-                className="fns-support-row" 
+              <div
+                key={idx}
+                className="fns-support-row"
                 onPointerEnter={(e) => {
                   if (e.pointerType === 'touch') return;
                   const msg = `${record.name || "Anonymous"}${record.message ? ': ' + record.message : ''}`;
@@ -304,8 +324,8 @@ const SupportList = ({ plugin }: { plugin: FastSync }) => {
                 </div>
 
                 {/* Avatar */}
-                <div 
-                  className="fns-support-avatar" 
+                <div
+                  className="fns-support-avatar"
                   style={{ backgroundColor: getAvatarColor(record.name) }}
                 >
                   {getInitials(record.name)}
@@ -329,28 +349,27 @@ const SupportList = ({ plugin }: { plugin: FastSync }) => {
               </div>
             ))}
           </div>
-
           <div className="fns-support-pager">
-            <div className="fns-support-thanks">{$("setting.support.thanks")}</div>
             <div className="fns-support-pager-controls">
-              <button 
-                disabled={pager.page <= 1 || loading} 
-                onClick={() => fetchRecords(pager.page - 1)}
+              <button
+                disabled={pager.page <= 1 || loading}
+                onClick={() => { void fetchRecords(pager.page - 1); }}
               >
                 <LucideIcon icon="chevron-left" size={14} />
               </button>
               <span>{pager.page}</span>
-              <button 
-                disabled={pager.page * pager.pageSize >= pager.totalRows || loading} 
-                onClick={() => fetchRecords(pager.page + 1)}
+              <button
+                disabled={pager.page * pager.pageSize >= pager.totalRows || loading}
+                onClick={() => { void fetchRecords(pager.page + 1); }}
               >
                 <LucideIcon icon="chevron-right" size={14} />
               </button>
             </div>
           </div>
-          {hoverTooltip && (
-            <div 
-              className="fns-fast-tooltip" 
+          <div className="fns-support-desc" dangerouslySetInnerHTML={{ __html: $("setting.support.thanks") }} />
+          {hoverTooltip && createPortal(
+            <div
+              className="fns-fast-tooltip"
               style={hoverTooltip.isMobile ? {
                 left: '50%',
                 top: hoverTooltip.y + 40,
@@ -363,7 +382,8 @@ const SupportList = ({ plugin }: { plugin: FastSync }) => {
               }}
             >
               {hoverTooltip.text}
-            </div>
+            </div>,
+            activeDocument.body
           )}
         </>
       )}
@@ -379,7 +399,7 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
       <div className="fns-support-header-desc">
         {$("setting.support.desc")}
       </div>
-      
+
       <div className="fns-support-cards-container">
         {/* Ko-fi Card */}
         <div className="fns-support-card fns-kofi-card">
@@ -410,16 +430,7 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
 
       {/* Supporters List Section */}
       <div className="fns-supporters-list-content">
-        {plugin.settings.api ? (
-          <SupportList plugin={plugin} />
-        ) : (
-          <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md" target="_blank" rel="noreferrer" className="fns-supporters-github-link">
-            <span className="fns-github-icon">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-            </span>
-            <span>{$("setting.support.list_link")}</span>
-          </a>
-        )}
+        <SupportList plugin={plugin} />
       </div>
     </div>
   )

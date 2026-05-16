@@ -1,28 +1,28 @@
 import { Plugin, Platform, addIcon } from "obsidian";
 
 import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, loadApiToken, saveApiToken, loadApiUrl, saveApiUrl, loadVault, saveVault, loadAutoRedirect, saveAutoRedirect } from "./lib/helps";
+import { clearAllTempChunks, abortAllFileOperations, resetFileOperations } from "./lib/file_operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { ShareIndicatorManager } from "./lib/share_indicator_manager";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
+import { FileDownloadSession, AppWithInternal } from "./lib/types";
 import { LocalStorageManager } from "./lib/local_storage_manager";
+import { ConcurrencyManager } from "./lib/concurrency_manager";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { RecycleBinModal } from "./views/recycle-bin-modal";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
 import { SyncLogManager } from "./lib/sync_log_manager";
+import { DebugLogModal } from "./views/debug-log-modal";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
-import { ConcurrencyManager } from "./lib/concurrency_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
-import { clearAllTempChunks, abortAllFileOperations, resetFileOperations } from "./lib/file_operator";
 import { $ } from "./i18n/lang";
-import { FileDownloadSession, AppWithInternal } from "./lib/types";
-import { DebugLogModal } from "./views/debug-log-modal";
 
 
 interface LegacySettings extends Partial<PluginSettings> {
@@ -360,7 +360,7 @@ export default class FastSync extends Plugin {
           new RecycleBinModal(this.app, this).open();
         },
       });
-      
+
       this.addCommand({
         id: "open-debug-log",
         name: $("ui.log.debug_title"),
@@ -440,7 +440,7 @@ export default class FastSync extends Plugin {
       const anyUploadCheckpointPattern = /^fns-.+-uploadSession-/
       const expireMs = 20 * 60 * 1000
       const now = Date.now()
-      
+
       // 注意：这里需要清理的是 localStorage 中的项，由于 app.loadLocalStorage 不支持遍历，
       // 我们只能继续使用 window.localStorage，但仅限于清理。
       for (let i = window.localStorage.length - 1; i >= 0; i--) {
@@ -464,7 +464,7 @@ export default class FastSync extends Plugin {
       }
 
       // 7. 刷新运行时设置 (包含网络探测，不阻塞主流程)
-      void this.refreshRuntime()
+      void this.reloadServices()
 
       // 8. 监听外观变更 (Listen for CSS/Theme changes)
       this.registerEvent(
@@ -485,7 +485,7 @@ export default class FastSync extends Plugin {
     this.shareIndicatorManager?.unload()
     this.menuManager?.unload()
     // 取消注册文件事件
-    void this.refreshRuntime(false)
+    void this.reloadServices(false)
     this.updateStatusBar("")
   }
 
@@ -632,11 +632,10 @@ export default class FastSync extends Plugin {
     await this.saveSettings()
   }
 
-  async saveSettings(setItem: string = "") {
+  async saveSettings() {
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
     }
-    await this.refreshRuntime(true, setItem)
     this.fileHashManager?.cleanupExcludedHashes()
     this.configHashManager?.cleanupExcludedHashes()
     // 文件夹暂未实现 cleanupExcludedHashes，但 FolderHashManager 初始化时会自动过滤
@@ -666,7 +665,12 @@ export default class FastSync extends Plugin {
     await this.saveData(settingsToSave)
   }
 
-  async refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
+  async saveAndReloadServices(setItem: string = "") {
+    await this.saveSettings()
+    this.reloadServices(true, setItem)
+  }
+
+  reloadServices(forceRegister: boolean = true, setItem: string = "") {
     if (forceRegister && this.settings.api && this.settings.apiToken) {
       if (this.settings.manualSyncEnabled) {
         dump("Manual sync mode enabled, skipping automatic WebSocket registration")
@@ -675,32 +679,34 @@ export default class FastSync extends Plugin {
         this.updateStatusBar("")
         return
       }
-      // 1. 前置探测跳转，更新 runApi
-      await this.api?.probeApiRedirect()
+      // 1. 前置探测跳转，更新 runApi (后台异步执行)
+      this.api?.probeApiRedirect().then(() => {
+        if (this.wsSettingChange) {
+          this.websocket?.unRegister()
+          this.wsSettingChange = false
+        }
 
-      if (this.wsSettingChange) {
-        this.websocket?.unRegister()
-        this.wsSettingChange = false
-      }
+        if (this.websocket?.isRegister) {
+          void this.websocket?.register()
+        }
 
-      if (this.websocket?.isRegister) {
-        void this.websocket?.register()
-      }
-
-      if (this.syncTimer) {
-        window.clearTimeout(this.syncTimer)
-      }
-      // 用于首次同步测试
-      if (this.isFirstSync && this.websocket?.isAuth) {
-        this.syncTimer = window.setTimeout(() => {
-          if (setItem == "syncEnabled" && this.settings.syncEnabled) {
-            void handleSync(this, false, "note")
-          } else if (setItem == "configSyncEnabled" && this.settings.configSyncEnabled) {
-            void handleSync(this, false, "config")
-          }
-          this.syncTimer = null
-        }, 2000)
-      }
+        if (this.syncTimer) {
+          window.clearTimeout(this.syncTimer)
+        }
+        // 用于首次同步测试
+        if (this.isFirstSync && this.websocket?.isAuth) {
+          this.syncTimer = window.setTimeout(() => {
+            if (setItem == "syncEnabled" && this.settings.syncEnabled) {
+              void handleSync(this, false, "note")
+            } else if (setItem == "configSyncEnabled" && this.settings.configSyncEnabled) {
+              void handleSync(this, false, "config")
+            }
+            this.syncTimer = null
+          }, 2000)
+        }
+      }).catch(e => {
+        console.error("Fast Note Sync: Background API probe failed", e)
+      })
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
       this.lastSyncMtime = new Map()

@@ -54,6 +54,13 @@ export function formatAuthorizationError(data: { code: number; message?: unknown
 
 // WebSocket 连接常量
 const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
+const NON_RECONNECT_REASONS = new Set([
+  "AuthorizationFaild",
+  "ClientClose",
+  "kicked by admin",
+  "TokenRotatedOrRevoked",
+  "broadcast failed"
+])
 
 function getWsCountStorageKey(plugin: FastSync): string {
   const vaultName = plugin.app.vault.getName();
@@ -223,14 +230,12 @@ export class WebSocketClient {
           isRegister: this.isRegister
         })
 
-        if (e.reason == "AuthorizationFaild") {
-          showSyncNotice("Remote Service Connection Closed: " + e.reason)
-        } else if (e.reason == "ClientClose") {
+        if (NON_RECONNECT_REASONS.has(e.reason)) {
           showSyncNotice("Remote Service Connection Closed: " + e.reason)
         }
 
         // Only reconnect if we differ intended to be registered
-        if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
+        if (this.isRegister && !NON_RECONNECT_REASONS.has(e.reason)) {
           // 断连时立即重置 isSyncing，避免重连后 handleSync 被守卫拦截
           // Reset isSyncing on disconnect to unblock handleSync after reconnect
           if (this.plugin.isSyncing) {

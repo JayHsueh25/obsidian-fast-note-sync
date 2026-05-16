@@ -25,6 +25,10 @@ export class ShareModal extends Modal {
     }
 
     private async checkShareStatus() {
+        if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+            this.render();
+            return;
+        }
         this.loading = true;
         this.render();
         const res = await this.plugin.api.getShare(this.path);
@@ -59,6 +63,17 @@ export class ShareModal extends Modal {
         setIcon(fileIcon, "file-text");
         fileBadge.createSpan({ text: this.path.split("/").pop() || this.path });
         setTooltip(fileBadge, this.path);
+
+        // offline check
+        if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+            const emptyState = container.createDiv("fns-share-empty-state");
+            
+            const emptyIcon = emptyState.createDiv("fns-empty-icon");
+            setIcon(emptyIcon, "wifi-off");
+            
+            emptyState.createDiv({ text: $("setting.remote.disconnected"), cls: "fns-empty-text" });
+            return;
+        }
  
         if (this.loading) {
             const loadingEl = container.createDiv("fns-share-loading-state");

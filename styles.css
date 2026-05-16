@@ -938,7 +938,7 @@
   background-color: #FF8A33;
 }
 .fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-other {
-  background-color: #999999;
+  background-color: #999;
 }
 .fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-send {
   background-color: #FF8C00;
@@ -1216,7 +1216,7 @@
   z-index: 10001;
   width: 8px;
   height: 8px;
-  background-color: #999999;
+  background-color: #999;
   border-radius: 50%;
   border: 1.5px solid var(--background-primary);
   pointer-events: none;
@@ -3136,7 +3136,7 @@ body .suggestion-container {
   width: 100%;
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .fns-support-cards-container {
     grid-template-columns: 1fr;
   }
@@ -3189,8 +3189,8 @@ body .suggestion-container {
   display: block;
   width: 100%;
   text-align: center;
-  text-decoration: none !important;
-  box-shadow: none !important;
+  text-decoration: none;
+  box-shadow: none;
 }
 
 .fns-support-img-kofi {
@@ -3286,26 +3286,26 @@ body .suggestion-container {
   gap: 16px;
 }
 .fns-supporters-list-card .fns-support-sort-group button {
-  padding: 4px 4px;
+  padding: 4px;
   height: auto;
   min-height: 0;
   font-size: 11px;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: var(--text-muted) !important;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 0 !important;
-  font-weight: 500 !important;
+  margin: 0;
+  font-weight: 500;
   position: relative;
 }
 .fns-supporters-list-card .fns-support-sort-group button.is-active {
-  color: var(--interactive-accent) !important;
-  font-weight: 600 !important;
+  color: var(--interactive-accent);
+  font-weight: 600;
 }
 .fns-supporters-list-card .fns-support-sort-group button:hover:not(.is-active) {
-  color: var(--text-normal) !important;
+  color: var(--text-normal);
 }
 .fns-supporters-list-card .fns-support-sort-group button:not(:last-child)::after {
   content: "";
@@ -3335,7 +3335,6 @@ body .suggestion-container {
   background-color: var(--background-primary);
   transition: background-color 0.2s;
   gap: 12px;
-  cursor: pointer;
 }
 .fns-supporters-list-card .fns-support-row:hover {
   background-color: var(--background-secondary-alt);
@@ -3409,59 +3408,63 @@ body .suggestion-container {
 }
 .fns-supporters-list-card .fns-support-pager {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 0 4px;
-}
-.fns-supporters-list-card .fns-support-thanks {
-  font-size: 10px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--background-modifier-border-faint);
+  font-size: 11px;
   color: var(--text-faint);
-  opacity: 0.6;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
 }
-.fns-supporters-list-card .fns-support-pager-controls {
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  color: var(--text-faint);
-  opacity: 0.8;
+  gap: 16px;
+  color: var(--text-normal);
 }
-.fns-supporters-list-card .fns-support-pager-controls button {
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls button {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  width: 22px;
-  height: 22px;
-  min-height: 22px;
-  background: transparent !important;
-  border: 1px solid var(--background-modifier-border-faint) !important;
-  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: none !important;
-  margin: 0 !important;
+  color: var(--text-muted);
   transition: all 0.2s;
+  margin: 0;
+  box-shadow: none;
 }
-.fns-supporters-list-card .fns-support-pager-controls button:disabled {
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
-.fns-supporters-list-card .fns-support-pager-controls button:hover:not(:disabled) {
-  background-color: var(--background-modifier-hover) !important;
-  border-color: var(--background-modifier-border) !important;
-  color: var(--text-normal);
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls button:hover:not(:disabled) {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
 }
-.fns-supporters-list-card .fns-support-pager-controls span {
-  min-width: 20px;
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls button svg {
+  width: 14px;
+  height: 14px;
+}
+.fns-supporters-list-card .fns-support-pager .fns-support-pager-controls span {
+  min-width: 24px;
   text-align: center;
   font-weight: 600;
+  font-size: 12px;
   font-family: var(--font-monospace);
+}
+.fns-supporters-list-card .fns-support-desc {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--text-faint);
+  opacity: 0.6;
+  font-style: italic;
 }
 .fns-supporters-list-card .fns-support-loading, .fns-supporters-list-card .fns-support-empty {
   padding: 30px;
@@ -3497,20 +3500,17 @@ body .suggestion-container {
 
 .fns-fast-tooltip {
   position: fixed;
-  z-index: 10000;
-  background-color: var(--background-secondary-alt);
+  z-index: var(--layer-menu, 9999);
+  background-color: var(--background-primary);
   color: var(--text-normal);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
+  box-shadow: var(--shadow-s);
+  font-size: var(--font-ui-small, 13px);
   pointer-events: none;
-  max-width: 300px;
-  width: max-content;
-  line-height: 1.5;
-  white-space: normal;
-  word-break: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 /*# sourceMappingURL=styles.css.map */

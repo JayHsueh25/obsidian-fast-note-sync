@@ -376,5 +376,14 @@
   "setting.support.log_internal": "f1b858cb46b1fdbbaf15a720f2e9ef64",
   "setting.support.log_view": "e1603ba6cd907c2252b2e0a9b9ddb784",
   "ui.log.debug_title": "c67a872bdb17fe57d851a0930cb0eb0d",
-  "ui.log.copy_all": "2733a2430f38a87964bb146ba85f5a86"
+  "ui.log.copy_all": "2733a2430f38a87964bb146ba85f5a86",
+  "setting.support.list_link": "5348fe868a343965baa55161b2659b95",
+  "setting.support.sort_3m": "18c63459a2c069022c7790430f761214",
+  "setting.support.sort_amount": "df42059c523980ef67997b09b6d00e4a",
+  "setting.support.sort_time": "98c99f6230838750aa4eec19305a544d",
+  "setting.support.range_3m": "33dd59a95555694e5266f9a87ecb0bda",
+  "setting.support.range_all": "0d066eae41e7fbecd62b77fd3d546b93",
+  "setting.support.empty": "29c665d404c4441bb5b77c71dcc7b6cd",
+  "setting.support.thanks": "084c9f15b23ad50ac9f0259d6c4155b7",
+  "setting.support.loading": "26b5bd4947df8be257c59dde927b400c"
 }

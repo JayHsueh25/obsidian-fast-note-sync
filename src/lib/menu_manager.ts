@@ -1,13 +1,13 @@
 import { Menu, MenuItem, setIcon, Platform, WorkspaceLeaf } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime, rebuildAllHashes } from './operator';
-import { showSyncNotice, isVersionNew } from './helps';
+import { AppWithInternal, MenuItemWithDom, MenuWithHide } from "./types";
 import { NoteHistoryModal } from '../views/note-history/history-modal';
-import { ShareModal } from '../views/share-modal';
 import { RecycleBinModal } from '../views/recycle-bin-modal';
+import { showSyncNotice, isVersionNew } from './helps';
+import { ShareModal } from '../views/share-modal';
 import { AboutModal } from '../views/about-modal';
 import { $ } from "../i18n/lang";
-import { AppWithInternal, MenuItemWithDom, MenuWithHide, WorkspaceWithInternal } from "./types";
 import FastSync from "../main";
 
 
@@ -151,7 +151,7 @@ export class MenuManager {
     this.recycleBinStatusBarItem.addEventListener("click", () => {
       void this.plugin.activateRecycleBinView();
     });
-    
+
     this.refreshConcurrencyIndicator();
 
     this.plugin.addCommand({
@@ -319,7 +319,7 @@ export class MenuManager {
    */
   updateMobileHeaderIcon(status: boolean) {
     this.mobileHeaderIconStatus = status;
-    (this.plugin.app.workspace as unknown as WorkspaceWithInternal).iterateRootLeaves((leaf: WorkspaceLeaf) => {
+    this.plugin.app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
       // containerEl 通常是 .workspace-leaf-content，直接向下查询 .view-actions
       // containerEl is usually .workspace-leaf-content, query .view-actions downward
       const viewActions = (leaf.view.containerEl.querySelector('.view-actions')
@@ -468,16 +468,16 @@ export class MenuManager {
    */
   public refreshConcurrencyIndicator() {
     if (!this.concurrencyStatusBarItem) return;
-    
+
     const isEnabled = this.plugin.settings.concurrencyControlEnabled;
     const isShow = this.plugin.settings.showConcurrencyIndicator;
-    
+
     if (isEnabled && isShow) {
-        this.concurrencyStatusBarItem.addClass("fns-status-bar-item");
-        const limit = this.plugin.settings.maxConcurrentUploads;
-        this.concurrencyStatusBarItem.setAttribute("aria-label", $("setting.sync.concurrency_limit_tip", { count: limit }));
+      this.concurrencyStatusBarItem.addClass("fns-status-bar-item");
+      const limit = this.plugin.settings.maxConcurrentUploads;
+      this.concurrencyStatusBarItem.setAttribute("aria-label", $("setting.sync.concurrency_limit_tip", { count: limit }));
     } else {
-        this.concurrencyStatusBarItem.removeClass("fns-status-bar-item");
+      this.concurrencyStatusBarItem.removeClass("fns-status-bar-item");
     }
   }
 
@@ -563,39 +563,37 @@ export class MenuManager {
       (item as unknown as MenuItemWithDom).dom.setAttribute("aria-label", $("ui.recycle_bin.title"));
     });
 
-    // 分享中（X）菜单项，仅在有分享笔记或已连接时显示
-    // Sharing (X) menu item, shown when there are shared notes or connected
+    // 分享中（X）菜单项，任何时刻都显示
+    // Sharing (X) menu item, always shown
     const sharedCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
-    if (sharedCount > 0 || this.plugin.websocket.isAuth) {
-      menu.addSeparator();
-      menu.addItem((item: MenuItem) => {
-        const isActive = this.plugin.shareIndicatorManager?.isFilterActive ?? false;
-        item
-          .setIcon("share-2")
-          .setTitle($("ui.menu.sharing", { count: sharedCount }))
-          .setChecked(isActive)
-          .onClick(async () => {
-            this.plugin.shareIndicatorManager?.toggleFilter();
-            // 激活原生文件浏览器侧边栏（筛选仅作用于原生文件浏览器）
-            // Reveal native file explorer sidebar (filter only applies to native file explorer)
-            const leaves = this.plugin.app.workspace.getLeavesOfType("file-explorer");
-            if (leaves.length > 0) {
-              void this.plugin.app.workspace.revealLeaf(leaves[0]);
-            }
-          });
-        (item as unknown as MenuItemWithDom).dom.setAttribute("aria-label", $("ui.menu.sharing_desc"));
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      const isActive = this.plugin.shareIndicatorManager?.isFilterActive ?? false;
+      item
+        .setIcon("share-2")
+        .setTitle($("ui.menu.sharing", { count: sharedCount }))
+        .setChecked(isActive)
+        .onClick(async () => {
+          this.plugin.shareIndicatorManager?.toggleFilter();
+          // 激活原生文件浏览器侧边栏（筛选仅作用于原生文件浏览器）
+          // Reveal native file explorer sidebar (filter only applies to native file explorer)
+          const leaves = this.plugin.app.workspace.getLeavesOfType("file-explorer");
+          if (leaves.length > 0) {
+            void this.plugin.app.workspace.revealLeaf(leaves[0]);
+          }
+        });
+      (item as unknown as MenuItemWithDom).dom.setAttribute("aria-label", $("ui.menu.sharing_desc"));
 
-        // 异步获取分享列表并更新标题 / Async fetch share list and update title
-        if (this.plugin.websocket.isAuth) {
-          void this.plugin.shareIndicatorManager?.syncWithServer().then(() => {
-            const newCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
-            if (this.activeMenu === menu) {
-              item.setTitle($("ui.menu.sharing", { count: newCount }));
-            }
-          });
-        }
-      });
-    }
+      // 异步获取分享列表并更新标题 / Async fetch share list and update title
+      if (this.plugin.websocket.isAuth) {
+        void this.plugin.shareIndicatorManager?.syncWithServer().then(() => {
+          const newCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
+          if (this.activeMenu === menu) {
+            item.setTitle($("ui.menu.sharing", { count: newCount }));
+          }
+        });
+      }
+    });
 
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
@@ -607,14 +605,16 @@ export class MenuManager {
           new WSClientsModal(this.plugin.app, this.plugin).open();
         });
       (item as unknown as MenuItemWithDom).dom.setAttribute("aria-label", $("ui.system.websocketClients"));
-      
+
       // 异步获取在线客户端数量并更新菜单项
-      void this.plugin.api.getWSClients().then(clients => {
-        const count = clients?.length || 0;
-        if (count > 0 && this.activeMenu === menu) {
-          item.setTitle($("ui.system.websocketClients") + ` (${count})`);
-        }
-      });
+      if (this.plugin.websocket.isAuth) {
+        void this.plugin.api.getWSClients().then(clients => {
+          const count = clients?.length || 0;
+          if (count > 0 && this.activeMenu === menu) {
+            item.setTitle($("ui.system.websocketClients") + ` (${count})`);
+          }
+        });
+      }
     });
 
     menu.addSeparator();

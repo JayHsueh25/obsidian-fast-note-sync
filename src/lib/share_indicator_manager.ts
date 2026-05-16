@@ -1,5 +1,4 @@
 import type FastSync from "../main";
-import { WorkspaceWithInternal } from "./types";
 
 export class ShareIndicatorManager {
     // 内存中的分享路径集合 / In-memory set of shared paths
@@ -126,7 +125,9 @@ export class ShareIndicatorManager {
         this.isSyncing = true;
         try {
             if (!this.plugin.settings.api || !this.plugin.settings.apiToken) return;
-            await this.plugin.api.probeApiRedirect(this.plugin.runApi);
+            
+            // 新增：仅在 WebSocket 认证通过（确保服务端连通）时才获取分享列表
+            if (!this.plugin.websocket.isAuth) return;
 
             const paths = await this.plugin.api.getSharePaths();
             if (paths === null) return;
@@ -184,7 +185,7 @@ export class ShareIndicatorManager {
         } else {
             activeDocument.body.removeClass('fns-filter-active');
         }
-        (this.plugin.app.workspace as unknown as WorkspaceWithInternal).requestSaveLeafState();
+        this.plugin.app.workspace.requestSaveLayout();
     }
 
     private getAllAncestorFolders(): Set<string> {

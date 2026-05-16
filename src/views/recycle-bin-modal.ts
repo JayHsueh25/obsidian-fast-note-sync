@@ -62,14 +62,6 @@ export class RecycleBinModal extends Modal {
 
         this.titleEl.innerText = $("ui.recycle_bin.title");
 
-        // offline check
-        if (!this.plugin.websocket || !this.plugin.websocket.isConnected()) {
-            const div = contentEl.createDiv("fns-recycle-offline");
-            div.addClass("fns-padding-20", "fns-text-center", "fns-error-text");
-            div.innerText = $("ui.recycle_bin.offline");
-            return;
-        }
-
         this.renderTabs(contentEl);
         this.renderActions(contentEl);
 
@@ -196,6 +188,28 @@ export class RecycleBinModal extends Modal {
         listContainer.empty();
         listContainer.addClass("fns-list-container");
 
+        // offline check
+        if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+            const emptyState = listContainer.createDiv({ cls: "fns-empty-state fns-offline-state" });
+            emptyState.addClass("fns-text-center", "fns-muted-text");
+            emptyState.setCssProps({
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "250px"
+            });
+
+            const emptyIcon = emptyState.createDiv();
+            emptyIcon.addClass("fns-margin-b-15", "fns-opacity-6");
+            setIcon(emptyIcon, "wifi-off");
+
+            const emptyText = emptyState.createDiv();
+            emptyText.addClass("fns-font-lg");
+            emptyText.innerText = $("setting.remote.disconnected");
+            return;
+        }
+
         if (this.loading && (!this.items || this.items.length === 0)) {
             const loadingDiv = listContainer.createDiv("fns-loading");
             loadingDiv.addClass("fns-padding-40", "fns-text-center");
@@ -205,7 +219,14 @@ export class RecycleBinModal extends Modal {
 
         if (!this.items || this.items.length === 0) {
             const emptyState = listContainer.createDiv({ cls: "fns-empty-state" });
-            emptyState.addClass("fns-padding-60", "fns-text-center", "fns-muted-text");
+            emptyState.addClass("fns-text-center", "fns-muted-text");
+            emptyState.setCssProps({
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "250px"
+            });
 
             const emptyIcon = emptyState.createDiv();
             emptyIcon.addClass("fns-margin-b-15", "fns-opacity-6");
@@ -324,6 +345,11 @@ export class RecycleBinModal extends Modal {
     private async loadData(append: boolean = false) {
         if (this.abortController) {
             this.abortController.abort();
+        }
+        
+        if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+            this.render();
+            return;
         }
         this.abortController = new AbortController();
         const signal = this.abortController.signal;
