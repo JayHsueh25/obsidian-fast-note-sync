@@ -8,6 +8,7 @@
     "scss/at-mixin-pattern": null,
     "scss/dollar-variable-pattern": null,
     "font-family-no-missing-generic-family-keyword": null,
+    "color-hex-length": "long",
     "declaration-no-important": true,
     "declaration-block-single-line-max-declarations": null
   }
