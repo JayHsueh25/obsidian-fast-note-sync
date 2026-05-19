@@ -188,12 +188,7 @@ export class WebSocketClient {
     this.isRegister = true
 
     // 每次 ws 连接 / 重连 前 必须 先 /api/health 请求成功之后再请求ws
-    let isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-    if (!isHealthy) {
-        // Capacitor 原生 HTTP 从后台恢复时可能未就绪，立即重试一次
-        // Capacitor native HTTP may not be ready after background; retry once immediately
-        isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-    }
+    const isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
     if (!isHealthy) {
         dump("Health check failed before ws connect, scheduling reconnect...");
         if (this.plugin.settings.autoRedirectEnabled) {
@@ -459,33 +454,30 @@ export class WebSocketClient {
     }
     window.clearTimeout(this.checkReConnectTimeout)
     if (this.timeConnect > 15) {
-      // Max attempts hardcoded or use constant
       return
     }
     if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
       this.timeConnect++
-      // Exponential backoff: 3s, 6s, 12s, 24s...
-      let delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
+      // 前 3 次固定 1s，之后指数增长，最大 30min: 1s, 1s, 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 1800s, 1800s...
+      let delay = this.timeConnect <= 3
+        ? RECONNECT_BASE_DELAY
+        : Math.min(RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 3), 1800000)
 
-      // 调试地址回退逻辑
+      // 调试地址回退逻辑（预热 3 次后再尝试）
       const debugUrls = this.plugin.settings.debugRemoteUrls ? this.plugin.settings.debugRemoteUrls.split("\n").filter(u => u.trim() !== "") : []
       if (debugUrls.length > 0) {
-        // 从第2次重试开始尝试调试地址
-        if (this.timeConnect >= 2 && this.timeConnect < 2 + debugUrls.length) {
-          const index = this.timeConnect - 2
+        if (this.timeConnect >= 4 && this.timeConnect < 4 + debugUrls.length) {
+          const index = this.timeConnect - 4
           const url = debugUrls[index].trim()
           if (url) {
             dump(`Trying debug URL [${index + 1}/${debugUrls.length}]: ${url}`)
-            // 更新运行时 API
             this.plugin.runApi = url.replace(/\/+$/, "")
             this.plugin.runWsApi = url.replace(/^http/, "ws").replace(/\/+$/, "")
 
-            // 调试尝试使用较短延迟
             delay = 1000
             showSyncNotice(`[FastSync] 尝试连接调试地址: ${url}`)
           }
-        } else if (this.timeConnect === 2 + debugUrls.length) {
-          // 调试地址全部失败后，恢复配置的原始地址
+        } else if (this.timeConnect === 4 + debugUrls.length) {
           this.plugin.updateRuntimeApi(this.plugin.settings.api);
           dump(`Debug URLs failed, reverting to settings API`)
         }
