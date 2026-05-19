@@ -387,5 +387,8 @@
   "setting.support.thanks": "ed95d0dc7054b7da302965d7edb16af9",
   "setting.support.loading": "26b5bd4947df8be257c59dde927b400c",
   "ui.status.case_conflict.title": "ae11a70394bea87aad51c502a3954600",
-  "ui.status.case_conflict.log": "f30f97e1e9e464ba5291c57b85367685"
+  "ui.status.case_conflict.log": "f30f97e1e9e464ba5291c57b85367685",
+  "setting.support.message_title": "39a8dc692420e79d68a8b67bd88e8521",
+  "setting.support.message_label": "4ff56b0472c8a9687387991aee2ea7af",
+  "setting.support.no_message": "b74cd7ee0111150bd4722306b1fc2a53"
 }
