@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, Platform, SearchComponent, MarkdownRend
 import { createRoot, Root } from "react-dom/client";
 import { unzipSync } from "fflate";
 
-import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice, dumpError } from "./lib/helps";
+import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice, dump, dumpError } from "./lib/helps";
 import { resetSettingSyncTime, rebuildAllHashes, clearAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { RuleEditorModal } from "./views/rule-editor-modal";
@@ -844,12 +844,12 @@ export class SettingTab extends PluginSettingTab {
    * 下载、解压并覆盖安装指定版本的插件，并在完成后安全热重载插件
    * Download, unzip and overwrite install a specific version of the plugin, and safely hot-reload the plugin upon completion
    */
-  private async startVersionInstall(inputVersion: string, btn: any) {
-    console.info("[fast-note-sync] startVersionInstall called with input:", inputVersion);
+  private async startVersionInstall(inputVersion: string, btn: HTMLButtonElement) {
+    dump("[fast-note-sync] startVersionInstall called with input:", inputVersion);
     let latest = inputVersion.trim();
     if (!latest) {
       showSyncNotice($("setting.debug.version_install_empty") || "请输入要安装的版本号");
-      console.warn("[fast-note-sync] version input is empty");
+      dump("[fast-note-sync] version input is empty");
       return;
     }
 
@@ -857,54 +857,32 @@ export class SettingTab extends PluginSettingTab {
     if (latest.startsWith("v") || latest.startsWith("V")) {
       latest = latest.substring(1);
     }
-    console.log("[fast-note-sync] sanitized version input:", latest);
+    dump("[fast-note-sync] sanitized version input:", latest);
 
     // 2. 严格的 x.x.x 格式正则表达式校验 / Strict regex validation for x.x.x format
     const versionRegex = /^\d+\.\d+\.\d+$/;
     if (!versionRegex.test(latest)) {
       showSyncNotice($("setting.debug.version_install_invalid") || "版本号格式错误，必须为 x.x.x 格式（例如: 2.0.12）");
-      console.warn("[fast-note-sync] version format check failed:", latest);
+      dump("[fast-note-sync] version format check failed:", latest);
       return;
     }
 
     const tag = "v" + latest;
     const confirmMsg = ($("setting.debug.version_install_confirm") || "确认要从更新源下载并覆盖安装版本为 ${version} 的插件吗？").replace("${version}", tag);
 
-    console.log("[fast-note-sync] opening ConfirmModal for tag:", tag);
+    dump("[fast-note-sync] opening ConfirmModal for tag:", tag);
     new ConfirmModal(
       this.app,
       $("ui.title.notice"),
       confirmMsg,
-      async () => {
-        console.info("[fast-note-sync] ConfirmModal confirmed. Disabling button...");
-        // 自适应处理 ButtonComponent 和 HTMLButtonElement / Adaptive handling for ButtonComponent and HTMLButtonElement
-        const setDisabled = (b: any, state: boolean) => {
-          if (typeof b.setDisabled === "function") {
-            b.setDisabled(state);
-          } else {
-            b.disabled = state;
-          }
-        };
+      () => {
+        void (async () => {
+        dump("[fast-note-sync] ConfirmModal confirmed. Disabling button...");
 
-        const setBtnText = (b: any, text: string) => {
-          if (typeof b.setButtonText === "function") {
-            b.setButtonText(text);
-          } else {
-            b.textContent = text;
-          }
-        };
-
-        const getBtnText = (b: any) => {
-          if (typeof b.setButtonText === "function") {
-            return b.buttonEl.textContent || "";
-          }
-          return b.textContent || "";
-        };
-
-        setDisabled(btn, true);
-        const originalText = getBtnText(btn);
-        console.log("[fast-note-sync] original button text:", originalText);
-        setBtnText(btn, $("setting.debug.version_installing") || "正在安装...");
+        btn.disabled = true;
+        const originalText = btn.textContent || "";
+        dump("[fast-note-sync] original button text:", originalText);
+        btn.textContent = $("setting.debug.version_installing") || "正在安装...";
 
         try {
           const source = this.plugin.settings.updateSource || "github";
@@ -919,28 +897,28 @@ export class SettingTab extends PluginSettingTab {
             url = `https://cnb.cool/haierkeys/obsidian-fast-note-sync/-/releases/download/${latest}/${zipFileName}`;
           }
 
-          console.info(`[fast-note-sync] preparing download. Source: ${source}, Tag: ${tag}, Zip: ${zipFileName}, Dir: ${pluginDir}, URL: ${url}`);
+          dump(`[fast-note-sync] preparing download. Source: ${source}, Tag: ${tag}, Zip: ${zipFileName}, Dir: ${pluginDir}, URL: ${url}`);
           showSyncNotice($("ui.version.downloading_file", { file: zipFileName }) || `正在下载 ${zipFileName}...`);
 
           // 3. 跨域下载 Zip 包 / Download zip with requestUrl to bypass CORS and gain speed
-          console.log("[fast-note-sync] initiating requestUrl request to:", url);
+          dump("[fast-note-sync] initiating requestUrl request to:", url);
           const response = await requestUrl({
             url: url,
             method: "GET",
           });
 
-          console.log("[fast-note-sync] requestUrl returned. status:", response.status);
+          dump("[fast-note-sync] requestUrl returned. status:", response.status);
           if (response.status !== 200) {
             throw new Error(`Failed to download ${zipFileName}: ${response.status}`);
           }
 
           showSyncNotice("下载成功，正在解密与提取文件...");
           const arrayBuffer = response.arrayBuffer;
-          console.log("[fast-note-sync] arrayBuffer loaded. size in bytes:", arrayBuffer.byteLength);
+          dump("[fast-note-sync] arrayBuffer loaded. size in bytes:", arrayBuffer.byteLength);
 
-          console.log("[fast-note-sync] unzipping file contents with fflate...");
+          dump("[fast-note-sync] unzipping file contents with fflate...");
           const unzipped = unzipSync(new Uint8Array(arrayBuffer));
-          console.log("[fast-note-sync] unzip completed. Total items in zip:", Object.keys(unzipped).length);
+          dump("[fast-note-sync] unzip completed. Total items in zip:", Object.keys(unzipped).length);
 
           // 4. 自动检测根目录前缀（寻找 manifest.json 所在位置） / Automatically detect root prefix in zip
           let rootPrefix = "";
@@ -949,10 +927,10 @@ export class SettingTab extends PluginSettingTab {
           if (manifestFile) {
             rootPrefix = manifestFile.replace("manifest.json", "");
           }
-          console.log("[fast-note-sync] zip root prefix detected:", rootPrefix || "(none)");
+          dump("[fast-note-sync] zip root prefix detected:", rootPrefix || "(none)");
 
           const files = Object.entries(unzipped).filter(([name]) => !name.endsWith("/") && name.startsWith(rootPrefix));
-          console.log("[fast-note-sync] total files filtered to extract:", files.length);
+          dump("[fast-note-sync] total files filtered to extract:", files.length);
 
           // 5. 递归解压并覆盖写入 / Extract and overwrite recursively
           let count = 0;
@@ -961,7 +939,7 @@ export class SettingTab extends PluginSettingTab {
             if (!relativeFilename) continue;
 
             const path = `${pluginDir}/${relativeFilename}`;
-            console.log(`[fast-note-sync] extracting file [${++count}/${files.length}]: ${relativeFilename} -> ${path}`);
+            dump(`[fast-note-sync] extracting file [${++count}/${files.length}]: ${relativeFilename} -> ${path}`);
 
             // 确保父目录存在 / Ensure parent directory exists
             const pathParts = relativeFilename.split("/");
@@ -970,20 +948,20 @@ export class SettingTab extends PluginSettingTab {
               for (let i = 0; i < pathParts.length - 1; i++) {
                 currentPath += `/${pathParts[i]}`;
                 if (!(await this.plugin.app.vault.adapter.exists(currentPath))) {
-                  console.log(`[fast-note-sync] creating directory: ${currentPath}`);
+                  dump(`[fast-note-sync] creating directory: ${currentPath}`);
                   await this.plugin.app.vault.adapter.mkdir(currentPath);
                 }
               }
             }
 
-            console.log(`[fast-note-sync] writing binary data to: ${path}`);
+            dump(`[fast-note-sync] writing binary data to: ${path}`);
             await this.plugin.app.vault.adapter.writeBinary(path, content.buffer as ArrayBuffer);
           }
-          console.info("[fast-note-sync] all files successfully extracted and written to filesystem.");
+          dump("[fast-note-sync] all files successfully extracted and written to filesystem.");
 
           // 6. 热重载插件 / Hot reload plugin
           showSyncNotice($("setting.debug.version_installing_notice") || "正在安装指定版本插件...");
-          console.info("[fast-note-sync] initiating plugin hot reload...");
+          dump("[fast-note-sync] initiating plugin hot reload...");
 
           const app = this.app as AppWithInternal;
           const plugins = app.plugins;
@@ -992,28 +970,29 @@ export class SettingTab extends PluginSettingTab {
           }
 
           const id = this.plugin.manifest.id;
-          console.log("[fast-note-sync] target plugin ID to reload:", id);
+          dump("[fast-note-sync] target plugin ID to reload:", id);
 
           await new Promise((resolve) => window.setTimeout(resolve, 500));
 
-          console.log("[fast-note-sync] disabling plugin...");
+          dump("[fast-note-sync] disabling plugin...");
           await plugins.disablePlugin(id);
-          console.log("[fast-note-sync] loading plugin manifests...");
+          dump("[fast-note-sync] loading plugin manifests...");
           await plugins.loadManifests();
-          console.log("[fast-note-sync] enabling plugin...");
+          dump("[fast-note-sync] enabling plugin...");
           await plugins.enablePlugin(id);
 
-          console.info("[fast-note-sync] hot reload finished successfully.");
+          dump("[fast-note-sync] hot reload finished successfully.");
           showSyncNotice($("setting.debug.version_install_success") || "插件安装并重载成功", 10000);
         } catch (e) {
           const errorMsg = e instanceof Error ? e.message : String(e);
-          console.error("[fast-note-sync] manual version install failed with error:", e);
+          dumpError("[fast-note-sync] manual version install failed with error:", e);
           showSyncNotice(($("setting.debug.version_install_fail") || "插件安装失败") + ": " + errorMsg);
         } finally {
-          console.info("[fast-note-sync] startVersionInstall execution completed. Restoring button state.");
-          setDisabled(btn, false);
-          setBtnText(btn, originalText || "开始安装");
+          dump("[fast-note-sync] startVersionInstall execution completed. Restoring button state.");
+          btn.disabled = false;
+          btn.textContent = originalText || "开始安装";
         }
+        })();
       },
       $("ui.button.confirm"),
       $("ui.button.cancel"),
@@ -1753,9 +1732,6 @@ export class InputModal extends Modal {
       placeholder: this.placeholderStr
     });
     this.inputEl.addClass("fns-modal-input");
-    this.inputEl.style.width = "100%";
-    this.inputEl.style.marginTop = "10px";
-    this.inputEl.style.marginBottom = "20px";
     this.inputEl.focus();
 
     // 绑定 Enter 键触发提交 / Bind Enter key to submit
@@ -1768,9 +1744,6 @@ export class InputModal extends Modal {
     });
 
     const buttonContainer = contentEl.createDiv("fns-modal-button-container");
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.justifyContent = "flex-end";
-    buttonContainer.style.gap = "10px";
 
     const confirmBtn = buttonContainer.createEl("button", {
       text: $("ui.button.confirm") || "确认"

@@ -2451,7 +2451,7 @@ body .suggestion-container {
 }
 
 .fns-hidden {
-  display: none !important;
+  display: none;
 }
 
 .fns-white-text {
@@ -3703,6 +3703,18 @@ body .suggestion-container {
     opacity: 1;
     transform: scale(1);
   }
+}
+/* InputModal 样式 / InputModal styles */
+.fns-modal-input {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.fns-modal-button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 /*# sourceMappingURL=styles.css.map */
