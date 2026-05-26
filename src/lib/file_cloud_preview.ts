@@ -2,6 +2,7 @@ import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, r
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 
 import { hashContent, showSyncNotice, dumpError } from "./helps";
+import { CLIENT_TYPE } from "./types";
 import type FastSync from "../main";
 
 
@@ -627,7 +628,8 @@ export class FileCloudPreview {
       vault,
       path: vaultPath,
       token: apiToken,
-      pathHash: hashContent(vaultPath)
+      pathHash: hashContent(vaultPath),
+      client: CLIENT_TYPE
     });
 
     return `${api}/api/file?${params.toString()}`;

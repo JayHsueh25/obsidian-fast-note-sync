@@ -2,6 +2,7 @@ import { requestUrl } from "obsidian";
 
 import { hashContent, addRandomParam, showSyncNotice, dump, dumpError, nativeFetch } from "./helps";
 import { getLocale } from "../i18n/lang";
+import { CLIENT_TYPE } from "./types";
 import type FastSync from "../main";
 
 
@@ -288,7 +289,7 @@ export class HttpApiService {
         // 默认 Header 标准化
         const headers: Record<string, string> = {
             ...options.headers,
-            "x-client": "ObsidianPlugin",
+            "x-client": CLIENT_TYPE,
             "x-client-name": encodeURIComponent(this.plugin.getClientName()),
             "x-client-version": (this.plugin.manifest as { version?: string }).version || ""
         };

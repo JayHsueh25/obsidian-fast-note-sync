@@ -4,6 +4,7 @@ import { dump, dumpError, isWsUrl, addRandomParam, showSyncNotice, safeStringify
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync } from "./operator";
 import { SyncLogManager } from "./sync_log_manager";
+import { CLIENT_TYPE } from "./types";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 
@@ -216,7 +217,7 @@ export class WebSocketClient {
     }
 
     if (isWsUrl(this.plugin.runWsApi)) {
-      const client = "ObsidianPlugin";
+      const client = CLIENT_TYPE;
       const clientName = encodeURIComponent(this.plugin.getClientName());
       const clientVersion = this.plugin.manifest.version || "";
       const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count + "&client=" + client + "&clientName=" + clientName + "&clientVersion=" + clientVersion);
@@ -566,7 +567,7 @@ export class WebSocketClient {
     this.Send("ClientInfo", JSON.stringify({
       name: clientName,
       version: this.plugin.manifest.version,
-      type: "ObsidianPlugin",
+      type: CLIENT_TYPE,
       isDesktop: Platform.isDesktop,
       isMobile: Platform.isMobile,
       isPhone: Platform.isPhone,

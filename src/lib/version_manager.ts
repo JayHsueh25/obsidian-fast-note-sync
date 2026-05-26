@@ -71,8 +71,8 @@ export class VersionManager {
             const raw = plugin.localStorageManager.getMetadata(key) as string;
             if (!raw) return [];
             try {
-                return JSON.parse(raw);
-            } catch (e) {
+                return JSON.parse(raw) as unknown[];
+            } catch {
                 return [];
             }
         };

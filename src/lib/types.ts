@@ -1,5 +1,12 @@
 import { App, Menu, MenuItem } from "obsidian";
 
+/**
+ * Client type identifier sent to the server in HTTP headers, WebSocket URL,
+ * and API request parameters to distinguish the Obsidian plugin client.
+ * 发送给服务端的客户端类型标识符，用于 HTTP 请求头、WebSocket URL 及 API 参数中标识 Obsidian 插件客户端。
+ */
+export const CLIENT_TYPE = "ObsidianPlugin";
+
 export type SyncMode = "auto" | "note" | "config";
 
 export interface SnapFile {

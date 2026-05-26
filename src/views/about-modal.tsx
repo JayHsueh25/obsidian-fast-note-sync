@@ -240,7 +240,7 @@ const VersionItem = ({
     // Click hint: one-key expand the first intermediate version, and smooth scroll into view
     const handleHintClick = () => {
         setFirstHistoryOpen(true);
-        setTimeout(() => {
+        window.setTimeout(() => {
             const firstHistoryItem = containerRef.current?.querySelector('.fns-changelog-history-item');
             if (firstHistoryItem) {
                 firstHistoryItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
