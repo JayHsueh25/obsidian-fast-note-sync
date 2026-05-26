@@ -266,6 +266,9 @@ export default {
   "ui.version.upgrading_plugin": "Upgrading plugin...",
   "ui.version.reloading_plugin": "Reloading plugin...",
   "ui.version.upgrade_plugin_fail": "Plugin upgrade failed",
+  "ui.version.intermediate_versions": "Intermediate Versions",
+  "ui.version.click_to_expand": "Click to expand changelog",
+  "ui.version.has_intermediate_versions_below": "💡 Scroll down to view intermediate versions below 🔽",
 
   // --- ui.log ---
   "ui.log.title": "Sync Log",

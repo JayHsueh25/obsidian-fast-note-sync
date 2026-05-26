@@ -1825,8 +1825,44 @@ body .suggestion-container {
 
 .fns-changelog-container {
   margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px dashed var(--background-modifier-border);
+  padding: 16px 20px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border-faint);
+  border-radius: 8px;
+}
+
+/* Bottom scroll hint for intermediate versions / 中间版本底部滚动提示 */
+.fns-changelog-scroll-hint {
+  position: sticky;
+  bottom: 0px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  margin-bottom: 0px;
+  padding: 10px 14px;
+  background-color: color-mix(in srgb, var(--interactive-accent) 4%, var(--background-secondary));
+  border-radius: 6px;
+  font-size: 0.84em;
+  color: var(--text-accent);
+  font-weight: 500;
+  border: 1px dashed color-mix(in srgb, var(--interactive-accent) 15%, var(--background-modifier-border));
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fns-changelog-scroll-hint:hover {
+  background-color: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
+  border-color: color-mix(in srgb, var(--interactive-accent) 30%, var(--background-modifier-border));
+}
+.fns-changelog-scroll-hint:active {
+  transform: scale(0.982);
+}
+.fns-changelog-scroll-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .fns-changelog-title {
@@ -3744,6 +3780,114 @@ body .suggestion-container {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* Multi-version scroll area / 更新日志滚动区 */
+.fns-changelog-scroll-area {
+  margin-top: 15px;
+  padding-top: 0px;
+  border-top: 1px dashed var(--background-modifier-border);
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+.is-phone .fns-changelog-scroll-area {
+  max-height: 40vh;
+}
+.is-tablet .fns-changelog-scroll-area {
+  max-height: 60vh;
+}
+.fns-changelog-scroll-area::-webkit-scrollbar {
+  width: 6px;
+  background-color: var(--background-modifier-border-faint);
+  border-radius: 3px;
+}
+.fns-changelog-scroll-area::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+.fns-changelog-scroll-area::-webkit-scrollbar-thumb {
+  background-color: var(--text-faint);
+  border-radius: 10px;
+}
+.fns-changelog-scroll-area:hover::-webkit-scrollbar-thumb {
+  background-color: var(--text-accent);
+}
+.fns-changelog-scroll-area .fns-changelog-content {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-right: 0 !important;
+}
+
+/* Multi-version changelog list / 多版本更新日志列表 */
+.fns-changelog-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fns-changelog-history-item {
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border-faint);
+  background-color: var(--background-primary);
+  transition: all 0.2s ease;
+}
+.fns-changelog-history-item.is-expanded {
+  border-color: var(--background-modifier-border);
+}
+
+.fns-changelog-history-header {
+  position: sticky;
+  top: 0px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--background-secondary-alt);
+  user-select: none;
+  transition: all 0.2s ease;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+}
+.fns-changelog-history-item.is-collapsed .fns-changelog-history-header {
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+}
+.fns-changelog-history-header:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.fns-changelog-history-version {
+  font-weight: 700;
+  color: var(--text-accent);
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  background-color: var(--background-modifier-border-faint);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.fns-changelog-history-toggle {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.fns-changelog-history-body {
+  padding: 14px;
+  border-top: 1px solid var(--background-modifier-border-faint);
+  background-color: var(--background-primary);
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+}
+
+.fns-changelog-intermediate-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 24px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--background-modifier-border-faint);
 }
 
 /*# sourceMappingURL=styles.css.map */

@@ -52,6 +52,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
     const pluginIsNew = pluginInfo.isNew;
     const pluginNewChangelog = pluginInfo.newChangelog;
     const pluginCurrentChangelog = pluginInfo.currentChangelog;
+    const pluginHistory = pluginInfo.history;
 
     const serverCurrent = serverInfo.current;
     const serverNew = serverInfo.latest;
@@ -59,6 +60,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
     const serverNewChangelog = serverInfo.newChangelog;
     const serverCurrentChangelog = serverInfo.currentChangelog;
     const serverBaseChangelog = serverInfo.baseChangelog;
+    const serverHistory = serverInfo.history;
 
     const [isAdmin, setIsAdmin] = React.useState(false);
     const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -128,6 +130,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
                         latest={pluginIsNew ? pluginNew : pluginCurrent}
                         isNew={pluginIsNew}
                         changelog={pluginNewChangelog || pluginCurrentChangelog}
+                        history={pluginHistory}
                         canUpgrade={pluginIsNew}
                         onUpgrade={() => { void handlePluginUpgrade(); }}
                         isUpgrading={isUpgrading}
@@ -144,6 +147,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
                         latest={serverIsNew ? serverNew : serverCurrent}
                         isNew={serverIsNew}
                         changelog={serverNewChangelog || serverCurrentChangelog || serverBaseChangelog}
+                        history={serverHistory}
                         canUpgrade={serverIsNew && isAdmin}
                         onUpgrade={() => { void handleUpgrade(); }}
                         isUpgrading={isUpgrading}
@@ -156,30 +160,96 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
     );
 };
 
-const VersionItem = ({
-    title, current, latest, isNew, changelog, canUpgrade, onUpgrade, isUpgrading, status, isPlugin, app
-}: {
-    title: string; current: string; latest: string; isNew: boolean; changelog?: string;
-    canUpgrade?: boolean; onUpgrade?: () => void; isUpgrading?: boolean; status?: string; isPlugin: boolean;
-    app: App;
-}) => {
-    const changelogRef = React.useRef<HTMLDivElement>(null);
+/**
+ * 独立的 Markdown 更新日志渲染组件 (Standalone Markdown Changelog Renderer)
+ */
+const ChangelogRenderer = ({ app, content }: { app: App; content: string }) => {
+    const ref = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        if (changelog && changelogRef.current) {
+        if (content && ref.current) {
+            ref.current.empty();
             const component = new Component();
             void MarkdownRenderer.render(
                 app,
-                changelog,
-                changelogRef.current,
+                content,
+                ref.current,
                 "",
                 component
             );
         }
-    }, [changelog, app]);
+    }, [content, app]);
+
+    return <div ref={ref} className="fns-changelog-content markdown-rendered" />;
+};
+
+/**
+ * 历史版本折叠项组件 (Collapsible Changelog History Item)
+ */
+const ChangelogHistoryItem = ({
+    app, version, content, defaultOpen, isOpenControlled
+}: {
+    app: App; version: string; content: string; defaultOpen: boolean;
+    isOpenControlled?: boolean;
+}) => {
+    const [isOpen, setIsOpen] = React.useState(defaultOpen);
+
+    // 监听外部受控的打开状态，以支持从提示框点击一键强开
+    // Listen to external controlled open state, supporting one-click expand from hint bar
+    React.useEffect(() => {
+        if (isOpenControlled !== undefined) {
+            setIsOpen(isOpenControlled);
+        }
+    }, [isOpenControlled]);
 
     return (
-        <div className="fns-version-item">
+        <div className={`fns-changelog-history-item ${isOpen ? 'is-expanded' : 'is-collapsed'}`}>
+            <div 
+                className="fns-changelog-history-header fns-clickable" 
+                onClick={() => setIsOpen(!isOpen)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+                <span className="fns-changelog-history-version">v{version}</span>
+                <LucideIcon 
+                    icon={isOpen ? "chevron-up" : "chevron-down"} 
+                    size={16} 
+                    className="fns-changelog-history-toggle"
+                />
+            </div>
+            {isOpen && (
+                <div className="fns-changelog-history-body" style={{ marginTop: '10px' }}>
+                    <ChangelogRenderer app={app} content={content} />
+                </div>
+            )}
+        </div>
+    );
+};
+
+const VersionItem = ({
+    title, current, latest, isNew, changelog, history, canUpgrade, onUpgrade, isUpgrading, status, isPlugin, app
+}: {
+    title: string; current: string; latest: string; isNew: boolean; changelog?: string;
+    history?: { version: string; changelogContent: string }[];
+    canUpgrade?: boolean; onUpgrade?: () => void; isUpgrading?: boolean; status?: string; isPlugin: boolean;
+    app: App;
+}) => {
+    const [firstHistoryOpen, setFirstHistoryOpen] = React.useState(false);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    // 点击提示词：一键强制展开第一个历史版本，并极其平滑地滚动对齐该卡片头部
+    // Click hint: one-key expand the first intermediate version, and smooth scroll into view
+    const handleHintClick = () => {
+        setFirstHistoryOpen(true);
+        setTimeout(() => {
+            const firstHistoryItem = containerRef.current?.querySelector('.fns-changelog-history-item');
+            if (firstHistoryItem) {
+                firstHistoryItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 50);
+    };
+
+    return (
+        <div className="fns-version-item" ref={containerRef}>
             <div className="fns-version-header">
                 <h3>{title}</h3>
                 {isNew && <span className="fns-tag fns-tag-new">New</span>}
@@ -207,9 +277,54 @@ const VersionItem = ({
                 </div>
             </div>
 
-            {changelog && (
-                <div className="fns-changelog-container">
-                    <div ref={changelogRef} className="fns-changelog-content markdown-rendered" />
+            {((history && history.length > 0) || changelog) && (
+                <div className="fns-changelog-scroll-area">
+                    {(() => {
+                        const latestChangelog = (history && history.length > 0) ? history[0].changelogContent : changelog;
+                        const intermediateVersions = (history && history.length > 1) ? history.slice(1) : [];
+
+                        return (
+                            <>
+                                {latestChangelog && (
+                                    <div className="fns-changelog-container">
+                                        <ChangelogRenderer app={app} content={latestChangelog} />
+                                    </div>
+                                )}
+                                {/* 
+                                 * 如果存在中间历史版本，在最新版本卡片外部渲染一个独立的粘性滚动提示
+                                 * If there are intermediate history versions, render an independent sticky scroll hint below the latest card
+                                 */}
+                                {latestChangelog && intermediateVersions.length > 0 && (
+                                    <div 
+                                        className="fns-changelog-scroll-hint"
+                                        onClick={handleHintClick}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <span>{$("ui.version.has_intermediate_versions_below") || "💡 下方还有中间历史版本，可滚动查看 🔽"}</span>
+                                    </div>
+                                )}
+                                {intermediateVersions.length > 0 && (
+                                    <div className="fns-changelog-intermediate-section">
+                                        <div className="fns-changelog-intermediate-title">
+                                            {$("ui.version.intermediate_versions") || "中间版本"}
+                                        </div>
+                                        <div className="fns-changelog-history-list">
+                                            {intermediateVersions.map((item, index) => (
+                                                <ChangelogHistoryItem 
+                                                    key={item.version}
+                                                    app={app}
+                                                    version={item.version}
+                                                    content={item.changelogContent}
+                                                    defaultOpen={false}
+                                                    isOpenControlled={index === 0 ? (firstHistoryOpen || undefined) : undefined}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 

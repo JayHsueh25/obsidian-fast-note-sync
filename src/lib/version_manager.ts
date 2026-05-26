@@ -66,6 +66,16 @@ export class VersionManager {
      */
     public getVersionData() {
         const plugin = this.plugin;
+        // 获取中间版本历史记录 (Get intermediate version histories)
+        const parseHistory = (key: 'pluginVersionHistory' | 'serverVersionHistory') => {
+            const raw = plugin.localStorageManager.getMetadata(key) as string;
+            if (!raw) return [];
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                return [];
+            }
+        };
         return {
             plugin: {
                 current: plugin.manifest.version,
@@ -74,6 +84,7 @@ export class VersionManager {
                 newChangelog: plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent") as string,
                 currentChangelog: plugin.localStorageManager.getMetadata("pluginVersionChangelogContent") as string,
                 link: plugin.localStorageManager.getMetadata("pluginVersionNewLink") as string,
+                history: parseHistory("pluginVersionHistory") as { version: string; changelogContent: string }[],
             },
             server: {
                 current: plugin.localStorageManager.getMetadata("serverVersion") as string,
@@ -83,6 +94,7 @@ export class VersionManager {
                 currentChangelog: plugin.localStorageManager.getMetadata("serverVersionChangelogContent") as string,
                 baseChangelog: plugin.localStorageManager.getMetadata("serverChangelog") as string,
                 link: plugin.localStorageManager.getMetadata("serverVersionNewLink") as string,
+                history: parseHistory("serverVersionHistory") as { version: string; changelogContent: string }[],
             }
         };
     }
@@ -104,6 +116,10 @@ export class VersionManager {
         plugin.localStorageManager.setMetadata("serverVersionNewLink", data.versionNewLink ?? plugin.localStorageManager.getMetadata("serverVersionNewLink"));
         plugin.localStorageManager.setMetadata("serverVersionNewChangelogContent", data.versionNewChangelogContent ?? plugin.localStorageManager.getMetadata("serverVersionNewChangelogContent"));
         plugin.localStorageManager.setMetadata("serverVersionChangelogContent", data.versionChangelogContent ?? plugin.localStorageManager.getMetadata("serverVersionChangelogContent"));
+        // 保存服务端中间版本历史 (Save server intermediate version history)
+        if (data.versionHistory !== undefined) {
+            plugin.localStorageManager.setMetadata("serverVersionHistory", JSON.stringify(data.versionHistory || []));
+        }
 
         // 针对插件版本 (For plugin version)
         const pluginCurrent = plugin.manifest.version;
@@ -114,6 +130,10 @@ export class VersionManager {
         plugin.localStorageManager.setMetadata("pluginVersionNewLink", data.pluginVersionNewLink ?? plugin.localStorageManager.getMetadata("pluginVersionNewLink"));
         plugin.localStorageManager.setMetadata("pluginVersionNewChangelogContent", data.pluginVersionNewChangelogContent ?? plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent"));
         plugin.localStorageManager.setMetadata("pluginVersionChangelogContent", data.pluginVersionChangelogContent ?? plugin.localStorageManager.getMetadata("pluginVersionChangelogContent"));
+        // 保存插件中间版本历史 (Save plugin intermediate version history)
+        if (data.pluginVersionHistory !== undefined) {
+            plugin.localStorageManager.setMetadata("pluginVersionHistory", JSON.stringify(data.pluginVersionHistory || []));
+        }
 
         plugin.menuManager?.refreshUpgradeBadge();
     }

@@ -2022,8 +2022,51 @@ body .suggestion-container {
 
 .fns-changelog-container {
   margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px dashed var(--background-modifier-border);
+  padding: 16px 20px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border-faint);
+  border-radius: 8px;
+}
+
+/* Bottom scroll hint for intermediate versions / 中间版本底部滚动提示 */
+.fns-changelog-scroll-hint {
+  position: sticky;
+  bottom: 0px; // 牢牢钉在滚动视口底端
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  margin-bottom: 0px;
+  padding: 10px 14px;
+  // 背景色：混入极淡（4%）的主题强调色，与弹窗大背景优雅区分
+  background-color: color-mix(in srgb, var(--interactive-accent) 4%, var(--background-secondary));
+  border-radius: 6px;
+  font-size: 0.84em;
+  // 文字颜色：高亮使用标准系统强调色
+  color: var(--text-accent);
+  font-weight: 500;
+  // 边框：混入 15% 的主题色，勾勒精致浅色边框
+  border: 1px dashed color-mix(in srgb, var(--interactive-accent) 15%, var(--background-modifier-border));
+  pointer-events: auto; // 开启可点击交互
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // 高品质悬停高亮与按压缩放反馈 / High quality hover highlight and active press scale feedback
+  &:hover {
+    background-color: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-secondary));
+    border-color: color-mix(in srgb, var(--interactive-accent) 30%, var(--background-modifier-border));
+  }
+
+  &:active {
+    transform: scale(0.982); // 极其细腻的按压缩放弹性反馈，手感极佳！
+  }
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
 }
 
 .fns-changelog-title {
@@ -3734,7 +3777,7 @@ body .suggestion-container {
   gap: 20px;
   animation: fns-modal-scale-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: var(--text-normal);
-  
+
   .fns-supporter-modal-close {
     /* Close button / 关闭按钮 */
     position: absolute;
@@ -3744,7 +3787,7 @@ body .suggestion-container {
     color: var(--text-muted);
     cursor: pointer;
     transition: color 0.2s ease;
-    
+
     &:hover {
       color: var(--text-normal);
     }
@@ -3791,7 +3834,7 @@ body .suggestion-container {
         font-size: 14px;
         font-weight: 500;
         color: var(--interactive-accent);
-        
+
         .fns-supporter-modal-unit {
           /* Currency unit / 货币单位 */
           font-size: 12px;
@@ -3830,7 +3873,7 @@ body .suggestion-container {
       max-height: 200px;
       overflow-y: auto;
       border: 1px solid var(--background-modifier-border-faint);
-      
+
       &.is-empty {
         /* Stylized empty state / 空内容样式 */
         font-style: italic;
@@ -3860,7 +3903,7 @@ body .suggestion-container {
       &:hover {
         background-color: var(--interactive-accent-hover);
       }
-      
+
       &:active {
         transform: scale(0.97);
       }
@@ -3890,4 +3933,129 @@ body .suggestion-container {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* Multi-version scroll area / 更新日志滚动区 */
+.fns-changelog-scroll-area {
+  margin-top: 15px;
+  padding-top: 0px;
+  border-top: 1px dashed var(--background-modifier-border);
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 12px;
+
+  .is-phone & {
+    max-height: 40vh;
+  }
+
+  .is-tablet & {
+    max-height: 60vh;
+  }
+
+  // Webkit scrollbar - always visible / 始终显示滚动条
+  &::-webkit-scrollbar {
+    width: 6px;
+    background-color: var(--background-modifier-border-faint);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--text-faint);
+    border-radius: 10px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--text-accent);
+  }
+
+  // Prevent double scrollbar inside the scroll area
+  .fns-changelog-content {
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* Multi-version changelog list / 多版本更新日志列表 */
+.fns-changelog-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fns-changelog-history-item {
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border-faint);
+  background-color: var(--background-primary);
+  transition: all 0.2s ease;
+
+  &.is-expanded {
+    border-color: var(--background-modifier-border);
+  }
+}
+
+.fns-changelog-history-header {
+  position: sticky;
+  top: 0px; // 吸顶钉在滚动容器的最顶边缘
+  z-index: 5; // 确保不被向上滑动的 Markdown 内容文字所遮盖
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: var(--background-secondary-alt);
+  user-select: none;
+  transition: all 0.2s ease;
+
+  // 显式为 header 加上顶部圆角，以配合外层卡片 border-radius，防止去掉 overflow:hidden 后直角溢出
+  // Add explicit top border radius to match card, avoiding corner overflow after removing overflow:hidden
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+
+  // 在折叠状态下，header 也同时拥有底部的左右圆角，以闭合卡片形状
+  // In collapsed state, also give bottom border radius to close the card shape
+  .fns-changelog-history-item.is-collapsed & {
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+  }
+
+  &:hover {
+    background-color: var(--background-modifier-hover);
+  }
+}
+
+.fns-changelog-history-version {
+  font-weight: 700;
+  color: var(--text-accent);
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  background-color: var(--background-modifier-border-faint);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.fns-changelog-history-toggle {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.fns-changelog-history-body {
+  padding: 14px;
+  border-top: 1px solid var(--background-modifier-border-faint);
+  background-color: var(--background-primary);
+  
+  // 显式为 body 加上底部圆角，以配合外层卡片 border-radius，防止直角溢出
+  // Add explicit bottom border radius to match card, avoiding corner overflow
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+}
+
+.fns-changelog-intermediate-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 24px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--background-modifier-border-faint);
 }

@@ -266,6 +266,9 @@ export default {
   "ui.version.upgrading_plugin": "플러그인 업그레이드 중...",
   "ui.version.reloading_plugin": "플러그인 재로드 중...",
   "ui.version.upgrade_plugin_fail": "플러그인 업그레이드 실패",
+  "ui.version.intermediate_versions": "중간 버전",
+  "ui.version.click_to_expand": "클릭하여 변경 로그 펼치기",
+  "ui.version.has_intermediate_versions_below": "💡 아래에 중간 버전이 더 있습니다. 스크롤하여 확인하세요 🔽",
 
   // --- ui.log ---
   "ui.log.title": "동기화 로그",

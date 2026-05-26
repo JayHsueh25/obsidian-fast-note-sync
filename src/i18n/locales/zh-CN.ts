@@ -266,6 +266,9 @@ export default {
   "ui.version.upgrading_plugin": "正在升级插件...",
   "ui.version.reloading_plugin": "正在重载插件...",
   "ui.version.upgrade_plugin_fail": "插件升级失败",
+  "ui.version.intermediate_versions": "中间版本",
+  "ui.version.click_to_expand": "点击展开更新日志",
+  "ui.version.has_intermediate_versions_below": "本次升级将自动包含中间版本，可滚动查看 🔽",
 
   // --- ui.log ---
   "ui.log.title": "同步日志",

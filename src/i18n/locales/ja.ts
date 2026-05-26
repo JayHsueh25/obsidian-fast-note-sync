@@ -266,6 +266,9 @@ export default {
   "ui.version.upgrading_plugin": "プラグインをアップグレード中...",
   "ui.version.reloading_plugin": "プラグインを再読み込み中...",
   "ui.version.upgrade_plugin_fail": "プラグインのアップグレードに失敗しました",
+  "ui.version.intermediate_versions": "中間バージョン",
+  "ui.version.click_to_expand": "クリックして変更履歴を展開",
+  "ui.version.has_intermediate_versions_below": "💡 下部に中間バージョンがあります。スクロールして確認できます 🔽",
 
   // --- ui.log ---
   "ui.log.title": "同期ログ",

@@ -266,6 +266,9 @@ export default {
   "ui.version.upgrading_plugin": "正在升級外掛...",
   "ui.version.reloading_plugin": "正在重新載入外掛...",
   "ui.version.upgrade_plugin_fail": "外掛升級失敗",
+  "ui.version.intermediate_versions": "中間版本",
+  "ui.version.click_to_expand": "點擊展開更新日誌",
+  "ui.version.has_intermediate_versions_below": "💡 下方還有中間歷史版本，可滾動查看 🔽",
 
   // --- ui.log ---
   "ui.log.title": "同步日誌",
