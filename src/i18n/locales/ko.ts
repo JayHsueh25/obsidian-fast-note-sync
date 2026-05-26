@@ -104,7 +104,7 @@ export default {
   "setting.general.show_upgrade_badge": "메인 화면에 업데이트 배지 표시",
   "setting.general.show_upgrade_badge_desc": "활성화하면 플러그인이나 서버에 새 버전이 있을 때 사이드바, 모바일 상단 바 및 동기화 로그 아이콘에 빨간 점 알림이 표시됩니다.",
   "setting.display.show_sync_indicator": "동기화 상태 표시기 표시",
-  "setting.display.show_sync_indicator_desc": "활성화하면 데이터 전송 중에 아이콘 버튼 오른쪽 하단에 회전 아이콘이 표시됩니다.",
+  "setting.display.show_sync_indicator_desc": "이 옵션을 활성화하면 데이터 전송 시 아이콘 버튼 오른쪽 하단에 회전 아이콘이 표시됩니다.",
   "setting.sync.config_dirs": "설정 동기화-추가 디렉토리 동기화",
   "setting.sync.config_dirs_desc": "핵심 설정 동기화基礎上, 동기화할 특수 디렉토리를 추가합니다 (<b>.</b>로 시작해야 합니다).\n주의: <b>.</b>로 시작하지 않는 경로는 자동으로 무시되며, 이러한 디렉토리의 모든 파일이 동기화에 참여합니다. 예: .claude.",
   "setting.sync.config_dirs_placeholder": "추가 동기화할 디렉토리 경로를 입력하세요. . 로 시작해야 합니다. 예: .claude",
@@ -267,8 +267,8 @@ export default {
   "ui.version.reloading_plugin": "플러그인 재로드 중...",
   "ui.version.upgrade_plugin_fail": "플러그인 업그레이드 실패",
   "ui.version.intermediate_versions": "중간 버전",
-  "ui.version.click_to_expand": "클릭하여 변경 로그 펼치기",
-  "ui.version.has_intermediate_versions_below": "💡 아래에 중간 버전이 더 있습니다. 스크롤하여 확인하세요 🔽",
+  "ui.version.click_to_expand": "업데이트 기록을 보려면 클릭하세요",
+  "ui.version.has_intermediate_versions_below": "이번 업그레이드에는 중간 버전이 자동으로 포함되며, 아래로 스크롤하여 확인할 수 있습니다 🔽",
 
   // --- ui.log ---
   "ui.log.title": "동기화 로그",

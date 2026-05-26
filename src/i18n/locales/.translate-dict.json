@@ -403,5 +403,10 @@
   "setting.debug.version_installing_notice": "0932ef6aa3fe0f2e71f52d7a33d45579",
   "setting.debug.version_install_success": "85899f1bccb9a16a0339c61d49b01ff2",
   "setting.debug.version_install_fail": "3b99df92e20ad0806b12e434bc8171c4",
-  "ui.status.failed": "d61036e7f52095ded8cb1debfb913e18"
+  "ui.status.failed": "d61036e7f52095ded8cb1debfb913e18",
+  "setting.display.show_sync_indicator": "9dfbb7315b182bfa056f7168091dddbd",
+  "setting.display.show_sync_indicator_desc": "4704da66491d1c07ff44987f47bc41a1",
+  "ui.version.intermediate_versions": "079790a97cbf323fe7a3b7d2e058c78e",
+  "ui.version.click_to_expand": "dec2532ca519e81606ce50d7f2441222",
+  "ui.version.has_intermediate_versions_below": "b1c05427d802cca25d9c271f4d8cb36f"
 }

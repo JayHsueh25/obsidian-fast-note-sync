@@ -103,8 +103,8 @@ export default {
   "setting.general.show_share_icon_desc": "When enabled, icons for shared notes will be displayed in the <b>native file manager</b> and the third-party plugin <b>Notebook Navigator</b>.",
   "setting.general.show_upgrade_badge": "Show update badge on main interface",
   "setting.general.show_upgrade_badge_desc": "When enabled, displays a red dot notification on the sidebar, mobile top bar, and sync log icon when the plugin or server has a new version.",
-  "setting.display.show_sync_indicator": "Show sync status indicator",
-  "setting.display.show_sync_indicator_desc": "When enabled, a spinning icon appears on the bottom-right of the icon button during data transfer.",
+  "setting.display.show_sync_indicator": "Show Sync Status Indicator",
+  "setting.display.show_sync_indicator_desc": "When enabled, a spinning icon will be displayed in the bottom-right corner of the icon button during data transfer.",
   "setting.sync.config_dirs": "Config Sync - Add Directory Sync",
   "setting.sync.config_dirs_desc": "In addition to core config sync, add special directories that need to be synced (must start with <b>.</b>).\nNote: Paths not starting with <b>.</b> will be automatically ignored; all files under these directories will participate in sync, e.g., .claude.",
   "setting.sync.config_dirs_placeholder": "Enter directory paths to add for sync, must start with ., e.g., .claude",
@@ -267,8 +267,8 @@ export default {
   "ui.version.reloading_plugin": "Reloading plugin...",
   "ui.version.upgrade_plugin_fail": "Plugin upgrade failed",
   "ui.version.intermediate_versions": "Intermediate Versions",
-  "ui.version.click_to_expand": "Click to expand changelog",
-  "ui.version.has_intermediate_versions_below": "💡 Scroll down to view intermediate versions below 🔽",
+  "ui.version.click_to_expand": "Click to expand release notes",
+  "ui.version.has_intermediate_versions_below": "This upgrade will automatically include intermediate versions. Scroll down to view 🔽",
 
   // --- ui.log ---
   "ui.log.title": "Sync Log",
