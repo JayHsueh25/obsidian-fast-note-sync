@@ -57,6 +57,8 @@ export class VersionManager {
         if (serverCurrent && serverLatest && !isVersionNew(serverCurrent, serverLatest)) {
             plugin.localStorageManager.setMetadata("serverVersionIsNew", false);
         }
+
+        dump(pluginCurrent, pluginLatest, serverCurrent, serverLatest);
     }
 
     /**

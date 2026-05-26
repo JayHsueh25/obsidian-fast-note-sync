@@ -1,7 +1,6 @@
 import { Plugin, Platform, addIcon } from "obsidian";
 
 import { dump, dumpError, checkAndNotifyCaseConflict, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, loadApiToken, saveApiToken, loadApiUrl, saveApiUrl, loadVault, saveVault, loadAutoRedirect, saveAutoRedirect, loadWsPreProbe, saveWsPreProbe } from "./lib/helps";
-import { DebugLogManager } from "./lib/debug_log_manager";
 import { clearAllTempChunks, abortAllFileOperations, resetFileOperations } from "./lib/file_operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
@@ -14,8 +13,10 @@ import { ConfigHashManager } from "./lib/config_hash_manager";
 import { RecycleBinModal } from "./views/recycle-bin-modal";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
+import { DebugLogManager } from "./lib/debug_log_manager";
 import { SyncLogManager } from "./lib/sync_log_manager";
 import { DebugLogModal } from "./views/debug-log-modal";
+import { VersionManager } from "./lib/version_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
@@ -23,7 +24,6 @@ import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
-import { VersionManager } from "./lib/version_manager";
 import { $ } from "./i18n/lang";
 
 
@@ -361,6 +361,9 @@ export default class FastSync extends Plugin {
       // 防止重复初始化 (Prevent duplicate initialization)
       if (this.menuManagerInitialized) return;
       this.menuManagerInitialized = true
+
+      // 校验与清洗陈旧的版本元数据标记 (Validate and clean up redundant version badges)1
+      this.versionManager.validateAndRefreshTags();
 
       // 0. 清理残留的临时下载目录 (Cleanup residual temp download dirs)
       void clearAllTempChunks(this)
