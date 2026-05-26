@@ -595,8 +595,8 @@ export class SettingTab extends PluginSettingTab {
               serverLastConnectVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
             }),
 
-          serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
-          pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
+          serverVersionIsNew: this.plugin.versionManager.isServerNew(),
+          pluginVersionIsNew: this.plugin.versionManager.isPluginNew(),
         },
         systemInfo: {
           isDesktop: Platform.isDesktopApp,

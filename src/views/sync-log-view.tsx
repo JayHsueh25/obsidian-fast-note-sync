@@ -60,8 +60,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
     const [hasUpgrade, setHasUpgrade] = React.useState<boolean>(
-        !!(plugin.localStorageManager.getMetadata("pluginVersionIsNew") ||
-        plugin.localStorageManager.getMetadata("serverVersionIsNew"))
+        plugin.versionManager.hasNewVersion()
     );
     const [showUpgradeBadge, setShowUpgradeBadge] = React.useState<boolean>(plugin.settings.showUpgradeBadge);
 
@@ -88,9 +87,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
 
     React.useEffect(() => {
         const checkUpgrade = () => {
-            const hasNew = !!(plugin.localStorageManager.getMetadata("pluginVersionIsNew") ||
-                plugin.localStorageManager.getMetadata("serverVersionIsNew"));
-            setHasUpgrade(hasNew);
+            setHasUpgrade(plugin.versionManager.hasNewVersion());
         };
         checkUpgrade();
         // 移除 3秒一次的定时器，仅在打开视图时检查。这符合 Obsidian 审核要求，避免不必要的后台数据查询。

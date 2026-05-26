@@ -23,6 +23,7 @@ import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
+import { VersionManager } from "./lib/version_manager";
 import { $ } from "./i18n/lang";
 
 
@@ -47,6 +48,7 @@ export default class FastSync extends Plugin {
   runWsApi: string // 运行时 WebSocket API 地址
   api: HttpApiService // HTTP API 服务
   websocket: WebSocketClient // WebSocket 客户端
+  versionManager: VersionManager // 版本提示与自动升级管理器
   configManager: ConfigManager // 配置管理器
   lockManager: LockManager // 锁管理器
   concurrencyManager: ConcurrencyManager // 并发管理器
@@ -308,6 +310,7 @@ export default class FastSync extends Plugin {
 
     this.localStorageManager = new LocalStorageManager(this)
     this.api = new HttpApiService(this)
+    this.versionManager = new VersionManager(this)
     this.websocket = new WebSocketClient(this)
 
     await this.loadSettings()
@@ -843,7 +846,7 @@ export default class FastSync extends Plugin {
       } else {
         // 如果被遮挡或右侧栏已折叠，则重新激活并展开右侧栏
         // If hidden by other tabs or the right sidebar is collapsed, reveal it and expand right sidebar
-        workspace.revealLeaf(leaf);
+        void workspace.revealLeaf(leaf);
         rightSplit.expand();
       }
     } else {
@@ -852,7 +855,7 @@ export default class FastSync extends Plugin {
       const leaf = workspace.getRightLeaf(false);
       await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true });
       if (leaf) {
-        workspace.revealLeaf(leaf);
+        void workspace.revealLeaf(leaf);
         rightSplit.expand();
       }
     }

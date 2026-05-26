@@ -1,14 +1,12 @@
-import { App, Modal, MarkdownRenderer, Component, requestUrl } from "obsidian";
+import { App, Modal, MarkdownRenderer, Component } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
-import { unzipSync } from "fflate";
 
 import type FastSync from "../main";
-import { dump, dumpError, getPluginDir } from "../lib/helps";
+import { dumpError } from "../lib/helps";
 import { showSyncNotice } from "../lib/helps";
 import { $ } from "../i18n/lang";
 import { LucideIcon } from "./note-history/lucide-icon";
-import { AppWithInternal } from "../lib/types";
 
 
 /**
@@ -46,18 +44,21 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
     const [isUpgrading, setIsUpgrading] = React.useState(false);
     const [upgradeStatus, setUpgradeStatus] = React.useState("");
 
-    const pluginCurrent = plugin.manifest.version;
-    const pluginNew = plugin.localStorageManager.getMetadata("pluginVersionNewName") as string;
-    const pluginIsNew = !!plugin.localStorageManager.getMetadata("pluginVersionIsNew");
-    const pluginNewChangelog = plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent") as string;
-    const pluginCurrentChangelog = plugin.localStorageManager.getMetadata("pluginVersionChangelogContent") as string;
+    const versionData = React.useMemo(() => plugin.versionManager.getVersionData(), [plugin]);
+    const { plugin: pluginInfo, server: serverInfo } = versionData;
 
-    const serverCurrent = plugin.localStorageManager.getMetadata("serverVersion") as string;
-    const serverNew = plugin.localStorageManager.getMetadata("serverVersionNewName") as string;
-    const serverIsNew = !!plugin.localStorageManager.getMetadata("serverVersionIsNew");
-    const serverNewChangelog = plugin.localStorageManager.getMetadata("serverVersionNewChangelogContent") as string;
-    const serverCurrentChangelog = plugin.localStorageManager.getMetadata("serverVersionChangelogContent") as string;
-    const serverBaseChangelog = plugin.localStorageManager.getMetadata("serverChangelog") as string;
+    const pluginCurrent = pluginInfo.current;
+    const pluginNew = pluginInfo.latest;
+    const pluginIsNew = pluginInfo.isNew;
+    const pluginNewChangelog = pluginInfo.newChangelog;
+    const pluginCurrentChangelog = pluginInfo.currentChangelog;
+
+    const serverCurrent = serverInfo.current;
+    const serverNew = serverInfo.latest;
+    const serverIsNew = serverInfo.isNew;
+    const serverNewChangelog = serverInfo.newChangelog;
+    const serverCurrentChangelog = serverInfo.currentChangelog;
+    const serverBaseChangelog = serverInfo.baseChangelog;
 
     const [isAdmin, setIsAdmin] = React.useState(false);
     const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -84,192 +85,35 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
 
     const handleUpgrade = async () => {
         setIsUpgrading(true);
-        setUpgradeStatus($("ui.version.upgrading"));
-
         try {
-            // 1. 断开 WebSocket
-            plugin.websocket.unRegister();
-
-            // 2. 发起升级请求
-            const success = await plugin.api.adminUpgrade("latest"); // Assuming latest as default if not passed, but check original
-            if (!isMounted.current) return;
-            if (!success) {
-                showSyncNotice($("ui.version.upgrade_fail"));
-                setIsUpgrading(false);
-                 void plugin.websocket.register(); // 尝试恢复连接
-                return;
-            }
-
-            setUpgradeStatus($("ui.version.waiting_server"));
-
-            // 3. Poll health check using recursive setTimeout (not setInterval)
-            // 使用递归 setTimeout 进行健康检查轮询（而非 setInterval）
-            let pollTimeoutId: number | null = null;
-            let pollStopped = false;
-
-            const stopPolling = () => {
-              pollStopped = true;
-              if (pollTimeoutId !== null) {
-                window.clearTimeout(pollTimeoutId);
-                pollTimeoutId = null;
-              }
-            };
-
-            const scheduleNextPoll = () => {
-              if (pollStopped) return;
-              pollTimeoutId = window.setTimeout(() => {
-                void (async () => {
-                  if (pollStopped || !isMounted.current) return;
-                  const isAlive = await plugin.api.checkHealth(abortControllerRef.current?.signal);
-                  if (!isMounted.current) return;
-                  if (isAlive) {
-                    stopPolling();
-                    // 4. 重连并完成 / Reconnect and complete
-                    void plugin.websocket.register();
-                    showSyncNotice($("ui.version.upgrade_success"));
-                    setIsUpgrading(false);
-                    setUpgradeStatus("");
-                  } else {
-                    scheduleNextPoll();
-                  }
-                })();
-              }, 3000);
-            };
-
-            scheduleNextPoll();
-
-            // 超时保护 (如 2分钟) / Timeout guard (2 minutes)
-            window.setTimeout(() => {
-              if (pollStopped) return;
-              stopPolling();
-              setIsUpgrading(false);
-              showSyncNotice("Upgrade timeout or failed to detect server restart.");
-            }, 120000);
-
+            await plugin.versionManager.upgradeServer((status) => {
+                if (isMounted.current) setUpgradeStatus(status);
+            }, abortControllerRef.current?.signal);
+            
+            if (isMounted.current) setUpgradeStatus("");
         } catch (e) {
-            dumpError("Upgrade process error:", e);
-            showSyncNotice($("ui.version.upgrade_fail"));
-            setIsUpgrading(false);
-            void plugin.websocket.register();
+            dumpError("Upgrade server error:", e);
+            showSyncNotice($("ui.version.upgrade_fail") + ": " + (e instanceof Error ? e.message : String(e)));
+        } finally {
+            if (isMounted.current) setIsUpgrading(false);
         }
     };
 
     const handlePluginUpgrade = async () => {
         setIsUpgrading(true);
-        setUpgradeStatus($("ui.version.upgrading_plugin"));
-        dump("Starting plugin upgrade process...");
-
-        const latest = pluginNew;
-        if (!latest) {
-            dump("Error: Latest version info not found");
-            showSyncNotice("Latest version information not found.");
-            setIsUpgrading(false);
-            return;
-        }
-
-        const source = plugin.settings.updateSource || 'github';
-        const tag = latest; // User's example: tag is the version (e.g. 1.20.12-alpha)
-
-        // Extract version part for zip filename: 1.20.12-alpha -> 1.20.12
-        const versionPart = latest.split('-')[0];
-        const zipFileName = `fast-note-sync-v${versionPart}.zip`;
-
-        const baseUrl = source === 'github'
-            ? `https://github.com/haierkeys/obsidian-fast-note-sync/releases/download/${tag}`
-            : `https://cnb.cool/haierkeys/obsidian-fast-note-sync/-/releases/download/${tag}`;
-
-        const pluginDir = getPluginDir(plugin);
-        dump(`Upgrade info: source=${source}, tag=${tag}, zipName=${zipFileName}, dir=${pluginDir}`);
-
         try {
-            setUpgradeStatus($("ui.version.downloading_file", { file: zipFileName }));
-            const url = `${baseUrl}/${zipFileName}`;
-            dump(`Downloading from: ${url}`);
+            await plugin.versionManager.upgradePlugin((status) => {
+                if (isMounted.current) setUpgradeStatus(status);
+            }, abortControllerRef.current?.signal);
 
-            let arrayBuffer: ArrayBuffer;
-            // 插件升级涉及跨域下载 (GitHub/CNB)，必须使用 requestUrl 以规避 CORS 限制
-            const response = await requestUrl({
-                url: url,
-                method: 'GET',
-            });
-
-            if (response.status !== 200) {
-                dump(`Download failed with status: ${response.status}`);
-                throw new Error(`Failed to download ${zipFileName}: ${response.status}`);
+            if (isMounted.current) {
+                closeModal();
             }
-            if (!isMounted.current) return;
-            arrayBuffer = response.arrayBuffer;
-            dump(`Download successful, size: ${arrayBuffer.byteLength} bytes`);
-
-            // Extract Zip
-            dump("Loading zip archive...");
-            const unzipped = unzipSync(new Uint8Array(arrayBuffer));
-            if (!isMounted.current) return;
-
-            // 自动检测根目录前缀（寻找 manifest.json 所在位置）
-            let rootPrefix = "";
-            const fileNames = Object.keys(unzipped);
-            const manifestFile = fileNames.find(f => f.endsWith("manifest.json"));
-            if (manifestFile) {
-                rootPrefix = manifestFile.replace("manifest.json", "");
-                if (rootPrefix) dump(`Detected root prefix in zip: "${rootPrefix}"`);
-            }
-
-            const files = Object.entries(unzipped).filter(([name]) => !name.endsWith('/') && name.startsWith(rootPrefix));
-            dump(`Zip file contains ${files.length} valid items`);
-
-            for (const [realFilename, content] of files) {
-                // 剔除前缀获取相对路径
-                const relativeFilename = realFilename.substring(rootPrefix.length);
-                if (!relativeFilename) continue;
-
-                const path = `${pluginDir}/${relativeFilename}`;
-                dump(`Extracting file: ${realFilename} -> ${path}`);
-
-                // Ensure parent directory exists (recursive)
-                const pathParts = relativeFilename.split('/');
-                if (pathParts.length > 1) {
-                    let currentPath = pluginDir;
-                    for (let i = 0; i < pathParts.length - 1; i++) {
-                        currentPath += `/${pathParts[i]}`;
-                        if (!(await plugin.app.vault.adapter.exists(currentPath))) {
-                            dump(`Creating directory: ${currentPath}`);
-                            await plugin.app.vault.adapter.mkdir(currentPath);
-                        }
-                    }
-                }
-
-                await plugin.app.vault.adapter.writeBinary(path, content.buffer as ArrayBuffer);
-            }
-
-            dump("Plugin upgrade completed successfully, starting hot reload...");
-            setUpgradeStatus($("ui.version.reloading_plugin"));
-
-            const app = plugin.app as AppWithInternal;
-            const plugins = app.plugins;
-            if (!plugins) {
-                setUpgradeStatus($("ui.version.upgrade_plugin_fail"));
-                return;
-            }
-
-            const id = plugin.manifest.id;
-
-            // 稍微延迟一下，确保 Notice 和状态更新能被识别
-            await new Promise(resolve => window.setTimeout(resolve, 500));
-
-            // 执行热重载：禁用 -> 重新扫描 -> 启用
-            await plugins.disablePlugin(id);
-            await plugins.loadManifests();
-            await plugins.enablePlugin(id);
-
-            showSyncNotice($("ui.version.upgrade_plugin_success"), 10000);
-            closeModal();
         } catch (e) {
-            const errorMsg = e instanceof Error ? e.message : String(e);
-            dumpError(`Plugin upgrade error: ${errorMsg}`, e);
-            showSyncNotice($("ui.version.upgrade_fail") + ": " + errorMsg);
+            dumpError("Upgrade plugin error:", e);
+            showSyncNotice($("ui.version.upgrade_fail") + ": " + (e instanceof Error ? e.message : String(e)));
         } finally {
-            setIsUpgrading(false);
+            if (isMounted.current) setIsUpgrading(false);
         }
     };
 

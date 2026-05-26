@@ -4,7 +4,7 @@ import { startupSync, startupFullSync, resetSettingSyncTime, rebuildAllHashes } 
 import { AppWithInternal, MenuItemWithDom, MenuWithHide, MenuItemWithInternal } from "./types";
 import { NoteHistoryModal } from '../views/note-history/history-modal';
 import { RecycleBinModal } from '../views/recycle-bin-modal';
-import { showSyncNotice, isVersionNew } from './helps';
+import { showSyncNotice } from './helps';
 import { ShareModal } from '../views/share-modal';
 import { AboutModal } from '../views/about-modal';
 import { $ } from "../i18n/lang";
@@ -377,23 +377,10 @@ export class MenuManager {
   }
 
   refreshUpgradeBadge() {
-    // 1. 实时校验插件版本，如果已手动更新则清除红点标记 (Validate plugin version; clear badge if manually updated)
-    const pluginCurrent = this.plugin.manifest.version;
-    const pluginLatest = this.plugin.localStorageManager.getMetadata("pluginVersionNewName") as string;
-    if (pluginLatest && !isVersionNew(pluginCurrent, pluginLatest)) {
-      this.plugin.localStorageManager.setMetadata("pluginVersionIsNew", false);
-    }
+    // 1. 实时校验插件和服务器版本并自动清除不需要的红点标记 (Validate and clean up redundant version badges)
+    this.plugin.versionManager.validateAndRefreshTags();
 
-    // 2. 实时校验服务端版本，如果缓存的版本已达到最新则清除红点标记 (Validate server version; clear badge if cached version matches latest)
-    const serverCurrent = this.plugin.localStorageManager.getMetadata("serverVersion") as string;
-    const serverLatest = this.plugin.localStorageManager.getMetadata("serverVersionNewName") as string;
-    if (serverCurrent && serverLatest && !isVersionNew(serverCurrent, serverLatest)) {
-      this.plugin.localStorageManager.setMetadata("serverVersionIsNew", false);
-    }
-
-    const pluginNew = !!this.plugin.localStorageManager.getMetadata("pluginVersionIsNew");
-    const serverNew = !!this.plugin.localStorageManager.getMetadata("serverVersionIsNew");
-    const hasNew = (pluginNew || serverNew);
+    const hasNew = this.plugin.versionManager.hasNewVersion();
 
     // const visibility = hasNew ? "block" : "none";
 
@@ -667,9 +654,9 @@ export class MenuManager {
     });
 
     const showVersion = this.plugin.settings.showVersionInfo;
-    const pluginNew = this.plugin.localStorageManager.getMetadata("pluginVersionIsNew");
-    const serverVersion = this.plugin.localStorageManager.getMetadata("serverVersion");
-    const serverNew = this.plugin.localStorageManager.getMetadata("serverVersionIsNew");
+    const pluginNew = this.plugin.versionManager.isPluginNew();
+    const serverVersion = this.plugin.versionManager.getVersionData().server.current;
+    const serverNew = this.plugin.versionManager.isServerNew();
 
     const showPlugin = showVersion || pluginNew;
     const showServer = serverVersion && (showVersion || serverNew);
@@ -716,7 +703,7 @@ export class MenuManager {
       };
 
       menu.addItem((item: MenuItem) => {
-        const title = $("ui.menu.server") + ": v" + (serverVersion as string);
+        const title = $("ui.menu.server") + ": v" + serverVersion;
         item.setTitle(title)
           .setIcon("server")
           .onClick(onServerVersionClick);

@@ -1,6 +1,6 @@
 import { moment, Platform } from "obsidian";
 
-import { dump, dumpError, isWsUrl, addRandomParam, isVersionNew, showSyncNotice, safeStringify } from "./helps";
+import { dump, dumpError, isWsUrl, addRandomParam, showSyncNotice, safeStringify } from "./helps";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync } from "./operator";
 import { SyncLogManager } from "./sync_log_manager";
@@ -372,28 +372,7 @@ export class WebSocketClient {
             return
           } else {
             if (data.data) {
-              // 针对服务端版本 (For server version)
-              const serverCurrent = (this.plugin.localStorageManager.getMetadata("serverVersion") as string) || "";
-              const serverLatest = (data.data.versionNewName || data.data.version) as string;
-              const serverIsNew = (data.data.versionIsNew ?? this.plugin.localStorageManager.getMetadata("serverVersionIsNew")) && isVersionNew(serverCurrent, serverLatest);
-              this.plugin.localStorageManager.setMetadata("serverVersionIsNew", serverIsNew)
-
-              this.plugin.localStorageManager.setMetadata("serverVersionNewName", data.data.versionNewName ?? this.plugin.localStorageManager.getMetadata("serverVersionNewName"))
-              this.plugin.localStorageManager.setMetadata("serverVersionNewLink", data.data.versionNewLink ?? this.plugin.localStorageManager.getMetadata("serverVersionNewLink"))
-              this.plugin.localStorageManager.setMetadata("serverVersionNewChangelogContent", data.data.versionNewChangelogContent ?? this.plugin.localStorageManager.getMetadata("serverVersionNewChangelogContent"))
-              this.plugin.localStorageManager.setMetadata("serverVersionChangelogContent", data.data.versionChangelogContent ?? this.plugin.localStorageManager.getMetadata("serverVersionChangelogContent"))
-
-              // 针对插件版本 (For plugin version)
-              const pluginCurrent = this.plugin.manifest.version;
-              const pluginLatest = data.data.pluginVersionNewName as string;
-              const pluginIsNew = (data.data.pluginVersionIsNew ?? this.plugin.localStorageManager.getMetadata("pluginVersionIsNew")) && isVersionNew(pluginCurrent, pluginLatest);
-              this.plugin.localStorageManager.setMetadata("pluginVersionIsNew", pluginIsNew)
-
-              this.plugin.localStorageManager.setMetadata("pluginVersionNewName", (data.data.pluginVersionNewName) ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewName"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionNewLink", (data.data.pluginVersionNewLink) ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewLink"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionNewChangelogContent", (data.data.pluginVersionNewChangelogContent) ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionChangelogContent", (data.data.pluginVersionChangelogContent) ?? this.plugin.localStorageManager.getMetadata("pluginVersionChangelogContent"))
-              this.plugin.menuManager?.refreshUpgradeBadge();
+              this.plugin.versionManager.updateFromClientInfo(data.data);
             }
           }
           return
