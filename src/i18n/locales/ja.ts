@@ -16,6 +16,8 @@ export default {
   "setting.debug.show_version_desc": "有効にすると、バージョン情報は同期メニューに常に表示されます。無効にすると、更新がある場合のみ表示されます。",
   "setting.debug.update_source": "プラグイン更新元",
   "setting.debug.update_source_desc": "プラグインを手動でアップグレードする際のダウンロード元を選択してください。より高速なダウンロード速度を得るため、CNB を優先して選択することを推奨します。",
+  "setting.debug.protobuf": "Protobuf プロトコルを有効にする",
+  "setting.debug.protobuf_desc": "WebSocket メッセージ伝送で Protobuf バイナリプロトコルを有効にします。無効にした場合、従来の JSON テキストメッセージプロトコルがデフォルトで使用されます。変更を有効にするには再接続が必要です。",
 
   // --- setting.remote ---
   "setting.remote.title": "リモート",

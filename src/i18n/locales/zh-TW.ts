@@ -16,6 +16,8 @@ export default {
   "setting.debug.show_version_desc": "開啟後，版本資訊將常駐顯示在同步選單中；關閉後，僅在有更新時顯示。",
   "setting.debug.update_source": "外掛更新來源",
   "setting.debug.update_source_desc": "選擇外掛手動升級時的下載來源，建議優先選擇 CNB 以獲得更快的下載速度。",
+  "setting.debug.protobuf": "啟用 Protobuf 協議",
+  "setting.debug.protobuf_desc": "在 WebSocket 訊息傳輸中啟用 Protobuf 二進位協議。關閉後將預設使用原本的 JSON 文字訊息協議。修改後需重新連線生效。",
 
   // --- setting.remote ---
   "setting.remote.title": "遠端",

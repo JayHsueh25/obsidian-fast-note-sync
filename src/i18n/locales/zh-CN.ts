@@ -16,6 +16,8 @@ export default {
   "setting.debug.show_version_desc": "开启后，版本信息将常驻显示在同步菜单中；关闭后，仅在有更新时显示。",
   "setting.debug.update_source": "插件更新源",
   "setting.debug.update_source_desc": "选择插件手动升级时的下载源，建议优先选择 CNB 以获得更快的下载速度。",
+  "setting.debug.protobuf": "启用 Protobuf 协议",
+  "setting.debug.protobuf_desc": "在 WebSocket 消息传输中启用 Protobuf 二进制协议。关闭后将默认使用原来的 JSON 文本消息协议。修改后需重新连接生效。",
 
   // --- setting.remote ---
   "setting.remote.title": "远端",

@@ -1,99 +1,70 @@
-import { moment, Platform } from "obsidian";
-
-import { dump, dumpError, isWsUrl, addRandomParam, showSyncNotice, safeStringify } from "./helps";
-import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
-import { receiveOperators, startupSync } from "./operator";
-import { SyncLogManager } from "./sync_log_manager";
-import { CLIENT_TYPE } from "./types";
-import type FastSync from "../main";
-import { $ } from "../i18n/lang";
-
-
-// 冲突相关错误码
-const ERROR_SYNC_CONFLICT = 530
-
-const AUTH_ERROR_REIMPORT_CODES = new Set([307, 308, 309, 310])
-
-const AUTH_ERROR_FALLBACK_MESSAGES: Record<number, string> = {
-  307: "Authorization token is missing",
-  308: "Session expired or token has been revoked",
-  309: "Authorization token is invalid or incomplete",
-  310: "Authorization token has expired",
-  312: "Authorization token is restricted by IP",
-  313: "Authorization token is restricted by user agent",
-  314: "Authorization token is restricted by client",
-  315: "Authorization token scope is restricted",
-}
-
-function normalizeNoticeValue(value: unknown): string {
-  if (value == null) return ""
-  if (Array.isArray(value)) {
-    return value
-      .map(item => normalizeNoticeValue(item))
-      .filter(Boolean)
-      .join(", ")
-  }
-
-  const text = safeStringify(value).trim()
-  return text === "undefined" ? "" : text
-}
-
-export function formatAuthorizationError(data: { code: number; message?: unknown; details?: unknown }): string {
-  const message = normalizeNoticeValue(data.message) || AUTH_ERROR_FALLBACK_MESSAGES[data.code] || "Authorization failed"
-  const details = normalizeNoticeValue(data.details)
-  const detailsText = details ? " Details=" + details : ""
-  const authFailureText = (message + " " + details).toLowerCase()
-  const needsReimportHint = AUTH_ERROR_REIMPORT_CODES.has(data.code) ||
-    authFailureText.includes("rotated") ||
-    authFailureText.includes("revoked") ||
-    authFailureText.includes("no longer exists") ||
-    authFailureText.includes("missing")
-  const hint = needsReimportHint ? " Hint=Please re-import the API configuration from the management console." : ""
-
-  return "Service Authorization Error: Code=" + data.code + " Msg=" + message + detailsText + hint
-}
+import { moment } from "obsidian";
+import { dump, dumpError, isWsUrl } from "./helps";
 
 // WebSocket 连接常量
-const RECONNECT_BASE_DELAY = 1000 // 重连基础延迟 (毫秒)
+const RECONNECT_BASE_DELAY = 1000; // 重连基础延迟 (毫秒)
 const NON_RECONNECT_REASONS = new Set([
   "AuthorizationFaild",
   "ClientClose",
   "kicked by admin",
   "TokenRotatedOrRevoked",
   "broadcast failed"
-])
+]);
 
-function getWsCountStorageKey(plugin: FastSync): string {
+export interface AppStoragePlugin {
+  app: {
+    vault: {
+      getName: () => string;
+    };
+    loadLocalStorage: (key: string) => unknown;
+    saveLocalStorage: (key: string, value: string | null) => void;
+  };
+  settings?: {
+    protobufEnabled?: boolean;
+  };
+}
+
+function getWsCountStorageKey(plugin: AppStoragePlugin): string {
   const vaultName = plugin.app.vault.getName();
   return `fns-${vaultName}-wsCount`;
 }
 
+export interface WebSocketClientOptions {
+  getWsUrl: (count: number) => string;
+  preConnectProbe?: () => Promise<boolean>;
+  
+  onOpen?: (client: WebSocketClient) => void;
+  onClose?: (client: WebSocketClient, code: number, reason: string) => void;
+  onMessage?: (client: WebSocketClient, action: string, data: unknown) => void;
+  onActivity?: () => void;
+
+  serializeMessage?: (action: string, payload: unknown) => Uint8Array;
+  deserializeMessage?: (data: Uint8Array) => { action: string; [key: string]: unknown };
+}
+
 export class WebSocketClient {
-  public ws: WebSocket
-  private plugin: FastSync
-  public isOpen: boolean = false
-  public isAuth: boolean = false
-  public checkConnection: number
-  public checkReConnectTimeout: number
-  public timeConnect = 0
-  public count = 0
-  private currentStartHandleId: number = 0
-  // 防并发锁：确保同一时间只有一个 register() 在执行，避免多个 health check 互相干扰
-  // Concurrency lock: ensures only one register() runs at a time, preventing concurrent health check interference
-  private registerPromise: Promise<void> | null = null
-  //同步全部文件时设置
+  public ws: WebSocket;
+  private plugin: AppStoragePlugin;
+  private options: WebSocketClientOptions;
 
-
-  public isRegister: boolean = true
+  public isOpen = false;
+  public isAuth = false;
+  public useProtobuf = false;
+  public checkConnection: number;
+  public checkReConnectTimeout: number;
+  public timeConnect = 0;
+  public count = 0;
+  private registerPromise: Promise<void> | null = null;
+  public isRegister = true;
+  
   private statusListeners: Set<(status: boolean) => void> = new Set();
+  private activityListeners: Set<() => void> = new Set();
+  private binaryHandlers = new Map<string, (data: ArrayBuffer | Blob) => void>();
 
-  // Binary message handlers registry
-  private binaryHandlers = new Map<string, (data: ArrayBuffer | Blob, plugin: FastSync) => void>();
+  constructor(plugin: AppStoragePlugin, options: WebSocketClientOptions) {
+    this.plugin = plugin;
+    this.options = options;
 
-  constructor(plugin: FastSync) {
-    this.plugin = plugin
-
-    // Load count from local storage
     const storageKey = getWsCountStorageKey(this.plugin);
     let storedCount = this.plugin.app.loadLocalStorage(storageKey) as string | null;
 
@@ -122,13 +93,10 @@ export class WebSocketClient {
       }
     }
 
-    this.count = storedCount ? parseInt(storedCount) : 0
-
-    // Register default file sync handler
-    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, (data, plugin) => { void handleFileChunkDownload(data, plugin); });
+    this.count = storedCount ? parseInt(storedCount) : 0;
   }
 
-  public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob, plugin: FastSync) => void) {
+  public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob) => void) {
     if (prefix.length !== 2) {
       dumpError("Binary handler prefix must be exactly 2 characters");
       return;
@@ -138,7 +106,6 @@ export class WebSocketClient {
 
   public addStatusListener(listener: (status: boolean) => void) {
     this.statusListeners.add(listener);
-    // Notify immediately of current state if already registered
     if (this.isRegister) {
       listener(this.isOpen);
     }
@@ -148,35 +115,29 @@ export class WebSocketClient {
     this.statusListeners.delete(listener);
   }
 
-  private notifyStatusChange(status: boolean) {
+  public notifyStatusChange(status: boolean) {
     this.statusListeners.forEach(listener => listener(status));
   }
-
-  /** 数据传输活动监听器 / Data transfer activity listeners */
-  private activityListeners: Set<() => void> = new Set();
 
   public addActivityListener(listener: () => void) {
     this.activityListeners.add(listener);
   }
 
-  private notifyActivity() {
+  public notifyActivity() {
     this.activityListeners.forEach(fn => fn());
+    this.options.onActivity?.();
   }
 
   public isConnected(): boolean {
-    return this.isOpen
+    return this.isOpen;
   }
 
   public async register() {
-
-    // Prevent duplicate connection if already connecting or open
     if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
       dump("WebSocket already connecting or open, skipping register");
       return;
     }
 
-    // 防并发锁：确保同一时间只有一个 register 在执行
-    // Concurrency lock: waits for any in-flight register to complete
     if (this.registerPromise) {
       await this.registerPromise;
       return;
@@ -191,40 +152,29 @@ export class WebSocketClient {
   }
 
   private async _doRegister() {
-
-    // Clean up existing closed socket if any
     if (this.ws) {
       this.cleanupWebSocket(this.ws);
     }
 
-    this.isRegister = true
+    this.isRegister = true;
 
-    // 每次 ws 连接 / 重连 前 必须 先 /api/health 请求成功之后再请求ws
-    const needProbe = this.plugin.settings.autoRedirectEnabled || this.plugin.settings.wsPreProbeEnabled;
-    let isHealthy = true;
-    if (needProbe) {
-        isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-    }
-    if (!isHealthy) {
+    if (this.options.preConnectProbe) {
+      const isHealthy = await this.options.preConnectProbe();
+      if (!isHealthy) {
         dump("Health check failed before ws connect, scheduling reconnect...");
-        if (this.plugin.settings.autoRedirectEnabled) {
-            dump("Tip: If you are on mobile or using a proxy, try disabling 'Auto Detect API Redirect' in settings.");
-        }
         this.isOpen = false;
         this.notifyStatusChange(false);
-        this.checkReConnect();
+        this.checkReconnect();
         return;
+      }
     }
 
-    if (isWsUrl(this.plugin.runWsApi)) {
-      const client = CLIENT_TYPE;
-      const clientName = encodeURIComponent(this.plugin.getClientName());
-      const clientVersion = this.plugin.manifest.version || "";
-      const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count + "&client=" + client + "&clientName=" + clientName + "&clientVersion=" + clientVersion);
-      this.ws = new WebSocket(wsUrl)
-      this.ws.binaryType = "arraybuffer"
-      this.count++
-      this.plugin.app.saveLocalStorage(getWsCountStorageKey(this.plugin), this.count.toString())
+    const wsUrl = this.options.getWsUrl(this.count);
+    if (isWsUrl(wsUrl)) {
+      this.ws = new WebSocket(wsUrl);
+      this.ws.binaryType = "arraybuffer";
+      this.count++;
+      this.plugin.app.saveLocalStorage(getWsCountStorageKey(this.plugin), this.count.toString());
 
       this.ws.onerror = (error: Event) => {
         dump("WebSocket error:", {
@@ -232,31 +182,27 @@ export class WebSocketClient {
           url: wsUrl,
           readyState: this.ws.readyState,
           error: error
-        })
-        this.notifyStatusChange(false)
-      }
+        });
+        this.notifyStatusChange(false);
+      };
 
       this.ws.onopen = (e: Event): void => {
-        this.timeConnect = 0
-        this.isAuth = false
-        this.isOpen = true
+        this.timeConnect = 0;
+        this.isAuth = false;
+        this.useProtobuf = false;
+        this.isOpen = true;
         dump("Service connected", {
           timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
           url: wsUrl
-        })
-        // this.notifyStatusChange(true) // 移至授权成功后通知 / Moved to notification after authorization success
-        if (this.plugin.runApi !== this.plugin.settings.api) {
-          if (this.plugin.settings.isShowNotice) {
-            showSyncNotice($("ui.status.api_connected", { url: this.plugin.runApi }), 5000)
-          }
-        }
-        this.Send("Authorization", this.plugin.settings.apiToken)
-        dump("Service authorization")
-      }
+        });
+        this.options.onOpen?.(this);
+      };
+
       this.ws.onclose = (e: CloseEvent) => {
-        this.isAuth = false
-        this.isOpen = false
-        this.notifyStatusChange(false)
+        this.isAuth = false;
+        this.useProtobuf = false;
+        this.isOpen = false;
+        this.notifyStatusChange(false);
 
         dump("Service close details:", {
           timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
@@ -265,39 +211,22 @@ export class WebSocketClient {
           wasClean: e.wasClean,
           timeConnect: this.timeConnect,
           isRegister: this.isRegister
-        })
+        });
 
         if (NON_RECONNECT_REASONS.has(e.reason)) {
-          showSyncNotice("Remote Service Connection Closed: " + e.reason)
-          this.isRegister = false
+          this.isRegister = false;
         }
 
-        // Only reconnect if we differ intended to be registered
+        this.options.onClose?.(this, e.code, e.reason);
+
         if (this.isRegister && !NON_RECONNECT_REASONS.has(e.reason)) {
-          // 断连时立即重置 isSyncing，避免重连后 handleSync 被守卫拦截
-          // Reset isSyncing on disconnect to unblock handleSync after reconnect
-          if (this.plugin.isSyncing) {
-            this.plugin.isSyncing = false
-            this.plugin.isSyncRequesting = false
-          }
-          this.checkReConnect()
+          this.checkReconnect();
         }
-        clearUploadQueue()
-        this.plugin.concurrencyManager.clear()
-        dump("Service close")
-      }
+        dump("Service close");
+      };
+
       this.ws.onmessage = (event: MessageEvent) => {
-        // 处理二进制消息(文件分片下载)
-
         if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-          // Dynamic Binary Message Dispatch
-          let binaryData: ArrayBuffer | Blob = event.data;
-
-          // Extract prefix (first 2 bytes)
-          if (binaryData instanceof Blob) {
-            if (binaryData.size < 2) return;
-          }
-
           void (async () => {
             let buf: ArrayBuffer;
             if (event.data instanceof Blob) {
@@ -312,105 +241,57 @@ export class WebSocketClient {
 
             const handler = this.binaryHandlers.get(prefixStr);
             if (handler) {
-              // Pass the rest of the data
               const rest = buf.slice(2);
-              handler(rest, this.plugin);
+              handler(rest);
               this.notifyActivity();
+            } else if (prefixStr === "pb") {
+              try {
+                const rest = buf.slice(2);
+                const view = new Uint8Array(rest);
+                if (this.options.deserializeMessage) {
+                  const result = this.options.deserializeMessage(view);
+                  
+                  // Only upgrade to Protobuf if the setting is enabled locally
+                  // 仅在本地设置启用时才升级为 Protobuf
+                  if (result.action === "ClientInfo" && this.plugin.settings?.protobufEnabled !== false) {
+                    this.useProtobuf = true;
+                    dump("WS Client upgraded to Protobuf successfully");
+                  }
+                  
+                  this.options.onMessage?.(this, result.action, result);
+                }
+              } catch (err) {
+                dumpError("Failed to decode incoming Protobuf message:", err);
+              }
             } else {
               dump("No handler for binary prefix:", prefixStr);
             }
           })();
 
-          return
+          return;
         }
 
-        // 处理文本消息
-        // 使用字符串 of indexOf 找到第一个分隔符的位置
-        const fullMsg = event.data as string
-        let msgData: string = fullMsg
-        let msgAction: string = ""
-        const index = fullMsg.indexOf("|")
+        const fullMsg = event.data as string;
+        let msgData: string = fullMsg;
+        let msgAction: string = "";
+        const index = fullMsg.indexOf("|");
         if (index !== -1) {
-          msgData = fullMsg.slice(index + 1)
-          msgAction = fullMsg.slice(0, index)
+          msgData = fullMsg.slice(index + 1);
+          msgAction = fullMsg.slice(0, index);
         }
-        const data = JSON.parse(msgData) as {
-          code: number;
-          message?: string;
-          details?: string;
-          data?: Record<string, unknown>; // data 内部仍可能有多变结构
-          vault?: string;
+        try {
+          const data: unknown = JSON.parse(msgData);
+          this.options.onMessage?.(this, msgAction, data);
+        } catch (err) {
+          dumpError("Failed to parse incoming JSON message:", err);
         }
-
-        // 记录接收到的消息
-        if (msgAction) {
-          SyncLogManager.getInstance().logReceivedMessage(msgAction, data, this.plugin.currentSyncType);
-        }
-
-
-        if (msgAction == "Authorization") {
-          if (data.code <= 0 || data.code >= 300) {
-            showSyncNotice(formatAuthorizationError(data), 6000)
-            return
-          } else {
-            this.isAuth = true
-            const paths = (data.data?.paths as string[]) || [];
-            this.plugin.shareIndicatorManager?.updateSharedPaths(paths);
-            if (data.data) {
-              this.plugin.localStorageManager.setMetadata("serverVersion", data.data.version ?? this.plugin.localStorageManager.getMetadata("serverVersion"))
-              this.plugin.localStorageManager.setMetadata("serverChangelog", data.data.changelog ?? this.plugin.localStorageManager.getMetadata("serverChangelog"))
-            }
-            dump("Service authorization success")
-            this.notifyStatusChange(true)
-
-            this.sendClientInfo()
-            void this.StartHandle()
-          }
-        }
-
-        if (msgAction == "ClientInfo") {
-          if (data.code <= 0 || data.code >= 300) {
-            return
-          } else {
-            if (data.data) {
-              this.plugin.versionManager.updateFromClientInfo(data.data);
-            }
-          }
-          return
-        }
-
-        if (data.code <= 0 || data.code >= 300) {
-          // 处理冲突相关错误码
-          if (data.code === ERROR_SYNC_CONFLICT) {
-            this.handleConflictError(data)
-          } else {
-            const errorMsg = data.message || "";
-            const errorDetails = data.details ? " Details=" + data.details : "";
-            showSyncNotice("Service Error: Code=" + data.code + " Message=" + errorMsg + errorDetails)
-          }
-        } else {
-
-          if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
-            dump("Service vault " + data.vault + " not match " + this.plugin.settings.vault)
-            return
-          }
-          const handler = receiveOperators.get(msgAction)
-          if (handler) {
-            void handler(data.data, this.plugin)
-            this.notifyActivity()
-          }
-        }
-      }
+      };
     }
   }
 
   private cleanupWebSocket(ws: WebSocket) {
     if (!ws) return;
 
-    // 清理残留并发槽位 / Clear stale concurrency slots
-    this.plugin.concurrencyManager.clear();
-
-    // Remove listeners to prevent "ghost" events
     ws.onopen = null;
     ws.onmessage = null;
     ws.onerror = null;
@@ -425,228 +306,132 @@ export class WebSocketClient {
     }
   }
 
-  public unRegister(setUnregistered: boolean = false) {
-    window.clearTimeout(this.checkReConnectTimeout)
-    this.timeConnect = 0
-    this.isOpen = false
-    this.isAuth = false
+  public unRegister(setUnregistered = false) {
+    window.clearTimeout(this.checkReConnectTimeout);
+    this.timeConnect = 0;
+    this.isOpen = false;
+    this.isAuth = false;
+    this.useProtobuf = false;
     if (setUnregistered) {
-      this.isRegister = false
+      this.isRegister = false;
     }
 
     if (this.ws) {
-      // Use helper to cleanly close and remove listeners
       this.cleanupWebSocket(this.ws);
-      this.ws = null as unknown as WebSocket; // Clear reference
+      this.ws = null as unknown as WebSocket;
     }
 
-    clearUploadQueue()
-    this.notifyStatusChange(false)
-    dump("Service unregister")
+    this.notifyStatusChange(false);
+    dump("Service unregister");
   }
 
-  //ddd
-  public checkReConnect() {
-    // 后台暂停期间不重连，避免无意义 health check 和退避计数增长
-    // Skip reconnect when watch is disabled, avoids pointless health checks and backoff inflation in background
-    if (!this.plugin.isWatchEnabled) {
-      dump("Watch disabled, skipping reconnect")
-      return
-    }
-    window.clearTimeout(this.checkReConnectTimeout)
+  public checkReconnect() {
+    window.clearTimeout(this.checkReConnectTimeout);
     if (this.timeConnect > 15) {
-      return
+      return;
     }
     if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
-      this.timeConnect++
-      // 前 3 次固定 1s，之后指数增长，最大 30min: 1s, 1s, 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s, 1024s, 1800s, 1800s...
-      let delay = this.timeConnect <= 3
+      this.timeConnect++;
+      
+      // Delay backoff: first 3 times 1s, then exponential growth up to 30 min
+      const delay = this.timeConnect <= 3
         ? RECONNECT_BASE_DELAY
-        : Math.min(RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 3), 1800000)
+        : Math.min(RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 3), 1800000);
 
-      // 调试地址回退逻辑（预热 3 次后再尝试）
-      const debugUrls = this.plugin.settings.debugRemoteUrls ? this.plugin.settings.debugRemoteUrls.split("\n").filter(u => u.trim() !== "") : []
-      if (debugUrls.length > 0) {
-        if (this.timeConnect >= 4 && this.timeConnect < 4 + debugUrls.length) {
-          const index = this.timeConnect - 4
-          const url = debugUrls[index].trim()
-          if (url) {
-            dump(`Trying debug URL [${index + 1}/${debugUrls.length}]: ${url}`)
-            this.plugin.runApi = url.replace(/\/+$/, "")
-            this.plugin.runWsApi = url.replace(/^http/, "ws").replace(/\/+$/, "")
-
-            delay = 1000
-            showSyncNotice(`[FastSync] 尝试连接调试地址: ${url}`)
-          }
-        } else if (this.timeConnect === 4 + debugUrls.length) {
-          this.plugin.updateRuntimeApi(this.plugin.settings.api);
-          dump(`Debug URLs failed, reverting to settings API`)
-        }
-      }
-
-      dump(`Service waiting reconnect: ${this.timeConnect}, delay: ${delay}ms`)
+      dump(`Service waiting reconnect: ${this.timeConnect}, delay: ${delay}ms`);
 
       this.checkReConnectTimeout = window.setTimeout(() => {
-        void this.register()
-      }, delay)
+        void this.register();
+      }, delay);
     }
   }
 
   public triggerReconnect() {
-    dump("Triggering manual reconnect due to network change")
-    // Reset connection time to allow immediate retry
-    this.timeConnect = 0
-    // Clear any existing reconnect timers
-    window.clearTimeout(this.checkReConnectTimeout)
-    // Force register
+    dump("Triggering manual reconnect due to network change");
+    this.timeConnect = 0;
+    window.clearTimeout(this.checkReConnectTimeout);
     void this.register();
   }
 
-  public async StartHandle() {
-    const handleId = ++this.currentStartHandleId
-    dump(`Service start handle, id: ${handleId}`)
-
-    if (this.plugin.settings.startupDelay > 0) {
-      dump(`Startup delay: ${this.plugin.settings.startupDelay}ms`)
-      await new Promise((resolve) => window.setTimeout(resolve, this.plugin.settings.startupDelay))
-    }
-
-    if (handleId !== this.currentStartHandleId) {
-      dump(`Service start handle cancelled, id: ${handleId}`)
-      return
-    }
-
-    // 等待 fileHashManager 初始化完成
-    if (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
-      dump(`Waiting for fileHashManager to be ready...`)
-
-      // 最多等待 30 秒
-      const maxWaitTime = 30000
-      const startTime = Date.now()
-
-      while (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
-        if (Date.now() - startTime > maxWaitTime) {
-          dump(`FileHashManager initialization timeout after ${maxWaitTime}ms`)
-          showSyncNotice("文件哈希管理器初始化超时,同步可能不稳定")
-          break
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 100))
-      }
-
-      if (this.plugin.fileHashManager && this.plugin.fileHashManager.isReady()) {
-        dump(`FileHashManager is ready, proceeding with sync`)
-      }
-    }
-
-    this.plugin.isFirstSync = true
-    this.plugin.isWatchEnabled = true
-
-    if (this.plugin.settings.manualSyncEnabled) {
-      dump("Full Manual Sync Mode enabled, skipping startup sync")
-      return
-    }
-
-    startupSync(this.plugin)
-  }
-
-
-
-
-
-  /**
-   * 发送客户端信息到服务端
-   * 用于更新客户端名称、版本、离线同步策略等信息
-   */
-  public sendClientInfo() {
-    if (!this.isAuth) {
-      return
-    }
-
-    const clientName = this.plugin.getClientName();
-
-    this.Send("ClientInfo", JSON.stringify({
-      name: clientName,
-      version: this.plugin.manifest.version,
-      type: CLIENT_TYPE,
-      isDesktop: Platform.isDesktop,
-      isMobile: Platform.isMobile,
-      isPhone: Platform.isPhone,
-      isTablet: Platform.isTablet,
-      isMacOS: Platform.isMacOS,
-      isWin: Platform.isWin,
-      isLinux: Platform.isLinux,
-      offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy
-    }))
-  }
-  /**
-    * 等待发送缓冲区清空
-    * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
-    */
-  private async waitForBufferDrain(maxBufferSize: number = 5 * 1024 * 1024): Promise<void> {
+  private async waitForBufferDrain(maxBufferSize = 5 * 1024 * 1024): Promise<void> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return
+      return;
     }
 
     while (this.ws.bufferedAmount > maxBufferSize) {
-      await new Promise(resolve => window.setTimeout(resolve, 50))
+      await new Promise(resolve => window.setTimeout(resolve, 50));
     }
   }
 
-  public async SendMessage(action: string, data: object | string, before?: () => boolean, after?: () => void) {
-    if (!this.isAuth || !this.plugin.isFirstSync) {
-      return
-    }
-
-    // 在发送前执行 before 回调,如果返回 true 则取消发送
+  public async SendMessage(action: string, data: unknown, before?: () => boolean, after?: () => void) {
     if (before && before()) {
-      return true; // 返回 true 表示被取消
+      return true; // Cancelled
     }
 
-    // 等待缓冲区有足够空间
-    await this.waitForBufferDrain()
+    await this.waitForBufferDrain();
 
     this.Send(action, data, () => {
-      SyncLogManager.getInstance().logSentMessage(action, data, this.plugin.currentSyncType);
-      after?.()
-      this.notifyActivity()
-    })
-
+      after?.();
+      this.notifyActivity();
+    });
   }
 
-
-  public Send(action: string, data: object | string, after?: () => void) {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      dump(`Service not connected, queuing message: ${action}`)
-      return
+  public Send(action: string, data: unknown, after?: () => void) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      dump(`Service not connected, queuing message: ${action}`);
+      return;
     }
-    if (typeof data === "string") {
-      this.ws.send(action + "|" + data)
+
+    if (this.useProtobuf && this.options.serializeMessage) {
+      try {
+        let payloadObj: unknown = data;
+        if (typeof data === "string") {
+          try {
+            payloadObj = JSON.parse(data) as unknown;
+          } catch {
+            payloadObj = data;
+          }
+        }
+        const bytes = this.options.serializeMessage(action, payloadObj);
+        const prefixBytes = new TextEncoder().encode("pb");
+        const bytesWithPrefix = new Uint8Array(prefixBytes.length + bytes.length);
+        bytesWithPrefix.set(prefixBytes);
+        bytesWithPrefix.set(bytes, prefixBytes.length);
+        this.ws.send(bytesWithPrefix);
+      } catch (err) {
+        dumpError(`Failed to serialize Protobuf message for action: ${action}`, err);
+        // Fallback to text JSON
+        this.sendTextFallback(action, data);
+      }
     } else {
-      this.ws.send(action + "|" + JSON.stringify(data))
+      this.sendTextFallback(action, data);
     }
-    after?.()
-
+    after?.();
   }
 
+  private sendTextFallback(action: string, data: unknown) {
+    if (typeof data === "string") {
+      this.ws.send(action + "|" + data);
+    } else {
+      this.ws.send(action + "|" + JSON.stringify(data));
+    }
+  }
 
   public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, before?: () => boolean, after?: () => void): Promise<boolean> {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      return false
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return false;
     }
 
     if (!prefix || prefix.length !== 2) {
       return false;
     }
 
-    // 在发送前执行 before 回调,如果返回 true 则取消发送
     if (before && before()) {
-      return true; // 返回 true 表示被取消
+      return true; // Cancelled
     }
 
-    // 等待缓冲区有足够空间
-    await this.waitForBufferDrain()
+    await this.waitForBufferDrain();
 
-    // 增加二进制消息管理层: 增加前两位字符
     const prefixBytes = new TextEncoder().encode(prefix);
     let dataToSend: Uint8Array;
 
@@ -655,34 +440,15 @@ export class WebSocketClient {
       dataToSend.set(prefixBytes);
       dataToSend.set(data, prefixBytes.length);
     } else {
-      // ArrayBuffer
       const dataView = new Uint8Array(data);
       dataToSend = new Uint8Array(prefixBytes.length + dataView.length);
       dataToSend.set(prefixBytes);
       dataToSend.set(dataView, prefixBytes.length);
     }
 
-    this.ws.send(dataToSend)
-    after?.()
-    this.notifyActivity()
-    return false; // 返回 false 表示正常发送
-  }
-
-
-
-  /**
-   * 处理冲突相关错误
-   * 当服务端检测到合并冲突或创建冲突文件时调用
-   */
-  private handleConflictError(data: { code: number; data?: { Path?: string }; message?: string; }) {
-    const path = data.data?.Path
-
-
-    dump("Conflict detected:", { code: data.code, Path: path, message: data.message })
-
-    if (data.code === ERROR_SYNC_CONFLICT && path) {
-      // 冲突文件已创建，显示详细通知
-      showSyncNotice($("ui.status.conflict", { path: path }), 10000)
-    }
+    this.ws.send(dataToSend);
+    after?.();
+    this.notifyActivity();
+    return false;
   }
 }

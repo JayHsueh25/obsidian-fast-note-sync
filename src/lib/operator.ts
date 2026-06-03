@@ -8,6 +8,7 @@ import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
+import * as WSAction from "./websocket_action";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 
@@ -209,40 +210,40 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
  */
 
 export type OperatorHandler = (data: unknown, plugin: FastSync) => Promise<void> | void;
-export const receiveOperators: Map<string, OperatorHandler> = new Map([
-  ["NoteSyncModify", receiveNoteSyncModify],
-  ["NoteSyncNeedPush", receiveNoteUpload],
-  ["NoteSyncMtime", receiveNoteSyncMtime],
-  ["NoteSyncDelete", receiveNoteSyncDelete],
-  ["NoteSyncRename", receiveNoteSyncRename],
-  ["NoteModifyAck", (data, plugin) => receiveNoteModifyAck(data as { lastTime?: number; path?: string }, plugin)],
-  ["NoteRenameAck", (data, plugin) => receiveNoteRenameAck(data as { lastTime?: number }, plugin)],
-  ["NoteDeleteAck", (data, plugin) => receiveNoteDeleteAck(data as { lastTime?: number; path?: string }, plugin)],
-  ["NoteSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "note")],
-  ["FileUpload", receiveFileUpload],
-  ["FileSyncUpdate", receiveFileSyncUpdate],
-  ["FileSyncChunkDownload", receiveFileSyncChunkDownload],
-  ["FileSyncDelete", receiveFileSyncDelete],
-  ["FileSyncRename", receiveFileSyncRename],
-  ["FileSyncMtime", receiveFileSyncMtime],
-  ["FileSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "file")],
-  ["FileRenameAck", receiveFileRenameAck],
-  ["FileUploadAck", receiveFileUploadAck],
-  ["FileDeleteAck", (data, plugin) => receiveFileDeleteAck(data as { lastTime?: number; path?: string }, plugin)],
-  ["SettingSyncModify", receiveConfigSyncModify],
-  ["SettingSyncNeedUpload", receiveConfigUpload],
-  ["SettingSyncMtime", receiveConfigSyncMtime],
-  ["SettingSyncDelete", receiveConfigSyncDelete],
-  ["SettingSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
-  ["SettingSyncClear", receiveConfigSyncClear],
-  ["SettingModifyAck", receiveConfigModifyAck],
-  ["SettingDeleteAck", receiveConfigDeleteAck],
-  ["FolderSyncModify", receiveFolderSyncModify],
-  ["FolderSyncDelete", receiveFolderSyncDelete],
-  ["FolderSyncRename", receiveFolderSyncRename],
-  ["FolderSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "folder")],
-  ["ShareSyncRefresh", receiveShareSyncRefresh],
-] as [string, OperatorHandler][]);
+export const receiveOperators: Map<WSAction.WSReceiveAction, OperatorHandler> = new Map([
+  [WSAction.NoteSyncModify, receiveNoteSyncModify],
+  [WSAction.NoteSyncNeedPush, receiveNoteUpload],
+  [WSAction.NoteSyncMtime, receiveNoteSyncMtime],
+  [WSAction.NoteSyncDelete, receiveNoteSyncDelete],
+  [WSAction.NoteSyncRename, receiveNoteSyncRename],
+  [WSAction.NoteModifyAck, (data, plugin) => receiveNoteModifyAck(data as { lastTime?: number; path?: string }, plugin)],
+  [WSAction.NoteRenameAck, (data, plugin) => receiveNoteRenameAck(data as { lastTime?: number }, plugin)],
+  [WSAction.NoteDeleteAck, (data, plugin) => receiveNoteDeleteAck(data as { lastTime?: number; path?: string }, plugin)],
+  [WSAction.NoteSyncEnd, (data, plugin) => receiveSyncEndWrapper(data, plugin, "note")],
+  [WSAction.FileUpload, receiveFileUpload],
+  [WSAction.FileSyncUpdate, receiveFileSyncUpdate],
+  [WSAction.FileSyncChunkDownload, receiveFileSyncChunkDownload],
+  [WSAction.FileSyncDelete, receiveFileSyncDelete],
+  [WSAction.FileSyncRename, receiveFileSyncRename],
+  [WSAction.FileSyncMtime, receiveFileSyncMtime],
+  [WSAction.FileSyncEnd, (data, plugin) => receiveSyncEndWrapper(data, plugin, "file")],
+  [WSAction.FileRenameAck, receiveFileRenameAck],
+  [WSAction.FileUploadAck, receiveFileUploadAck],
+  [WSAction.FileDeleteAck, (data, plugin) => receiveFileDeleteAck(data as { lastTime?: number; path?: string }, plugin)],
+  [WSAction.SettingSyncModify, receiveConfigSyncModify],
+  [WSAction.SettingSyncNeedUpload, receiveConfigUpload],
+  [WSAction.SettingSyncMtime, receiveConfigSyncMtime],
+  [WSAction.SettingSyncDelete, receiveConfigSyncDelete],
+  [WSAction.SettingSyncEnd, (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
+  [WSAction.SettingSyncClear, receiveConfigSyncClear],
+  [WSAction.SettingModifyAck, receiveConfigModifyAck],
+  [WSAction.SettingDeleteAck, receiveConfigDeleteAck],
+  [WSAction.FolderSyncModify, receiveFolderSyncModify],
+  [WSAction.FolderSyncDelete, receiveFolderSyncDelete],
+  [WSAction.FolderSyncRename, receiveFolderSyncRename],
+  [WSAction.FolderSyncEnd, (data, plugin) => receiveSyncEndWrapper(data, plugin, "folder")],
+  [WSAction.ShareSyncRefresh, receiveShareSyncRefresh],
+] as [WSAction.WSReceiveAction, OperatorHandler][]);
 
 /**
  * 收到分享状态变更通知，全量刷新分享路径

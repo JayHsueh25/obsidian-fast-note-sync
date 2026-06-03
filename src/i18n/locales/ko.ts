@@ -16,6 +16,8 @@ export default {
   "setting.debug.show_version_desc": "활성화하면 버전 정보가 동기화 메뉴에 항상 표시됩니다. 비활성화하면 업데이트가 있을 때만 표시됩니다.",
   "setting.debug.update_source": "플러그인 업데이트 소스",
   "setting.debug.update_source_desc": "플러그인 수동 업그레이드 시 다운로드 소스를 선택하세요. 더 빠른 다운로드 속도를 위해 CNB를 우선적으로 선택하는 것이 좋습니다.",
+  "setting.debug.protobuf": "Protobuf 프로토콜 활성화",
+  "setting.debug.protobuf_desc": "WebSocket 메시지 전송에서 Protobuf 이진 프로토콜을 활성화합니다. 비활성화 시 원래의 JSON 텍스트 메시지 프로토콜이 기본으로 사용됩니다. 변경 사항을 적용하려면 다시 연결해야 합니다.",
 
   // --- setting.remote ---
   "setting.remote.title": "원격",

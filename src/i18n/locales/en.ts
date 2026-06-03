@@ -16,6 +16,8 @@ export default {
   "setting.debug.show_version_desc": "When enabled, version info will be permanently displayed in the sync menu; when disabled, it will only appear when an update is available.",
   "setting.debug.update_source": "Plugin Update Source",
   "setting.debug.update_source_desc": "Select the download source for manual plugin upgrades. It is recommended to choose CNB first for faster download speeds.",
+  "setting.debug.protobuf": "Enable Protobuf Protocol",
+  "setting.debug.protobuf_desc": "Enable Protobuf binary protocol for WebSocket message transmission. If disabled, the original JSON text message protocol will be used by default. A reconnection is required for changes to take effect.",
 
   // --- setting.remote ---
   "setting.remote.title": "Remote",

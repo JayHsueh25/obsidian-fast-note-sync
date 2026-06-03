@@ -19,7 +19,7 @@ import { DebugLogModal } from "./views/debug-log-modal";
 import { VersionManager } from "./lib/version_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
-import { WebSocketClient } from "./lib/websocket";
+import { WebSocketManager } from "./lib/websocket_manager";
 import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
@@ -47,7 +47,7 @@ export default class FastSync extends Plugin {
   runApi: string // 运行时 API 地址
   runWsApi: string // 运行时 WebSocket API 地址
   api: HttpApiService // HTTP API 服务
-  websocket: WebSocketClient // WebSocket 客户端
+  websocket: WebSocketManager // WebSocket 客户端
   versionManager: VersionManager // 版本提示与自动升级管理器
   configManager: ConfigManager // 配置管理器
   lockManager: LockManager // 锁管理器
@@ -310,7 +310,7 @@ export default class FastSync extends Plugin {
 
     this.localStorageManager = new LocalStorageManager(this)
     this.api = new HttpApiService(this)
-    this.websocket = new WebSocketClient(this)
+    this.websocket = new WebSocketManager(this)
 
     await this.loadSettings()
 
