@@ -295,7 +295,7 @@ export default {
   "ui.log.category_other": "其他",
   "ui.log.summary.title_full": "同步完成 (全量)",
   "ui.log.summary.title_inc": "同步完成 (增量)",
-  "ui.log.summary.no_changes": "本次同步没有检测到任何内容变更",
+  "ui.log.summary.no_changes": "无变更",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "笔记库哈希计算进度(全量)",

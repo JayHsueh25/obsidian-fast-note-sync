@@ -295,7 +295,7 @@ export default {
   "ui.log.category_other": "기타",
   "ui.log.summary.title_full": "동기화 완료 (전체)",
   "ui.log.summary.title_inc": "동기화 완료 (증분)",
-  "ui.log.summary.no_changes": "이번 동기화에서 변경된 내용을 감지하지 못했습니다",
+  "ui.log.summary.no_changes": "변경 없음",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "노트 보관소 해시 계산 진행률(전체)",

@@ -307,12 +307,27 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
 
     // 筛选逻辑
     const filteredLogs = React.useMemo(() => {
-        return logs.filter(log => {
-            if (log.category === 'summary') return false; // 排除小结卡片 / Exclude summary card
-            const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
-            const matchType = typeFilter === 'all' || log.type === typeFilter;
+        const list = logs.filter(log => {
+            if (log.category === 'summary') {
+                const showSummary = (categoryFilter === 'all' || categoryFilter === 'other') && typeFilter === 'all';
+                if (!showSummary) return false;
+            } else {
+                const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
+                const matchType = typeFilter === 'all' || log.type === typeFilter;
+                if (!matchCategory || !matchType) return false;
+            }
             const matchVault = !log.vault || log.vault === plugin.settings.vault;
-            return matchCategory && matchType && matchVault;
+            return matchVault;
+        });
+
+        return list.sort((a, b) => {
+            // 如果两个日志的时间差在 2 秒（2000ms）之内，且其中一个是同步完成小结卡片，则强制将小结卡片排在前面（即降序排序的最上方）
+            // If the time difference is within 2s and one of them is the sync summary card, force summary card to be sorted first
+            if (Math.abs(a.timestamp - b.timestamp) <= 2000) {
+                if (a.category === 'summary' && b.category !== 'summary') return -1;
+                if (b.category === 'summary' && a.category !== 'summary') return 1;
+            }
+            return b.timestamp - a.timestamp;
         });
     }, [logs, categoryFilter, typeFilter, plugin.settings.vault]);
 
@@ -512,15 +527,15 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
             )}
 
             <div className="fns-sync-log-list" ref={scrollRef}>
-                {currentPage === 1 && (categoryFilter === 'all' || categoryFilter === 'other') && typeFilter === 'all' && latestSummary && (
-                    <SyncSummaryCard log={latestSummary} />
-                )}
                 {paginatedLogs.length === 0 ? (
-                    (!latestSummary || currentPage !== 1 || !['all', 'other'].includes(categoryFilter) || typeFilter !== 'all') && (
-                        <div className="fns-sync-log-empty">{$("ui.log.empty")}</div>
-                    )
+                    <div className="fns-sync-log-empty">{$("ui.log.empty")}</div>
                 ) : (
                     paginatedLogs.map((log) => {
+                        // 如果是同步小结卡片，则就地以卡片形式渲染，使其随时间线滚动
+                        // If it is a sync summary card, render it as a card in place so it rolls with timeline
+                        if (log.category === 'summary') {
+                            return <SyncSummaryCard key={log.id} log={log} />;
+                        }
                         // 如果是成功完成的哈希扫描，以卡片形式渲染
                         // If it is a successfully completed hash scan, render it as a card
                         if (log.action.startsWith('VaultScanning') && log.status === 'success') {

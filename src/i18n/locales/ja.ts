@@ -295,7 +295,7 @@ export default {
   "ui.log.category_other": "その他",
   "ui.log.summary.title_full": "同期完了（フル）",
   "ui.log.summary.title_inc": "同期完了（増分）",
-  "ui.log.summary.no_changes": "今回の同期では変更が検出されませんでした",
+  "ui.log.summary.no_changes": "変更なし",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "Vaultハッシュ計算進捗(全量)",

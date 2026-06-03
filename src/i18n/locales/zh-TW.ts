@@ -295,7 +295,7 @@ export default {
   "ui.log.category_other": "其他",
   "ui.log.summary.title_full": "同步完成（全量）",
   "ui.log.summary.title_inc": "同步完成（增量）",
-  "ui.log.summary.no_changes": "本次同步未偵測到任何內容變更",
+  "ui.log.summary.no_changes": "無變更",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "筆記庫雜湊計算進度(全量)",

@@ -295,7 +295,7 @@ export default {
   "ui.log.category_other": "Other",
   "ui.log.summary.title_full": "Sync Complete (Full)",
   "ui.log.summary.title_inc": "Sync Complete (Incremental)",
-  "ui.log.summary.no_changes": "No content changes detected in this sync",
+  "ui.log.summary.no_changes": "No changes",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "Vault Hash Calculation Progress (Full)",
