@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-deprecated -- Ignore Obsidian API display() deprecation warnings / 忽略 Obsidian API 的 display() 弃用警告 */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { KofiImage, WXImage } from "src/lib/utils/helpers_image";
 import { createPortal } from "react-dom";
@@ -23,11 +22,11 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
 
     plugin.localStorageManager.clearSyncTime()
     await plugin.saveAndReloadServices()
-    plugin.settingTab.display()
+    plugin.settingTab.refresh()
 
     window.setTimeout(() => {
       plugin.clipboardReadTip = ""
-      plugin.settingTab.display()
+      plugin.settingTab.refresh()
     }, 2000)
   }
 
@@ -36,11 +35,11 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
     plugin.clipboardReadTip = tip
 
     await plugin.saveAndReloadServices()
-    plugin.settingTab.display()
+    plugin.settingTab.refresh()
 
     window.setTimeout(() => {
       plugin.clipboardReadTip = ""
-      plugin.settingTab.display()
+      plugin.settingTab.refresh()
     }, 2000)
   }
 

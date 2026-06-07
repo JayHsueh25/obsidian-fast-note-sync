@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-deprecated -- Ignore Obsidian API display() deprecation warnings / 忽略 Obsidian API 的 display() 弃用警告 */
 import { App, PluginSettingTab, Setting, Platform, SearchComponent, MarkdownRenderer, Component, requestUrl, Modal, setIcon } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { unzipSync } from "fflate";
@@ -208,6 +207,10 @@ export class SettingTab extends PluginSettingTab {
     this.component.unload()
   }
 
+  refresh(): void {
+    (this as unknown as { display(): void }).display();
+  }
+
   display(): void {
     this.component.load()
     const { containerEl: set } = this
@@ -337,13 +340,13 @@ export class SettingTab extends PluginSettingTab {
         // Swipe right -> Previous tab
         if (currentIndex > 0) {
           this.activeTab = tabs[currentIndex - 1]
-          this.display()
+          this.refresh()
         }
       } else {
         // Swipe left -> Next tab
         if (currentIndex < tabs.length - 1) {
           this.activeTab = tabs[currentIndex + 1]
-          this.display()
+          this.refresh()
         }
       }
     }
@@ -357,7 +360,7 @@ export class SettingTab extends PluginSettingTab {
 
     // 优化：使用防抖减少重绘，并提高响应速度 (从 500ms 默认降低到 150ms)
     const debouncedApply = debounce(() => {
-      this.display()
+      this.refresh()
     }, 150)
 
     search.onChange((value) => {
@@ -456,7 +459,7 @@ export class SettingTab extends PluginSettingTab {
         this.searchQuery = "" // 切换标签时清空搜索
         if (this.searchComponent) this.searchComponent.setValue("")
         this.activeTab = tab.id
-        this.display()
+        this.refresh()
       }
     })
 
@@ -819,7 +822,7 @@ export class SettingTab extends PluginSettingTab {
               showSyncNotice($("setting.debug.reset_all_success"))
 
               // 重新渲染设置页面以展示变化
-              this.display()
+              this.refresh()
             })();
           },
           $("ui.button.confirm"),
@@ -853,7 +856,7 @@ export class SettingTab extends PluginSettingTab {
         .onChange(async (value: "off" | "console" | "internal") => {
           this.plugin.settings.logEnabled = value
           await this.plugin.saveAndReloadServices()
-          this.display() // 重新渲染以更新按钮显示状态
+          this.refresh() // 重新渲染以更新按钮显示状态
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
@@ -909,7 +912,8 @@ export class SettingTab extends PluginSettingTab {
         if (typeof destBtn.setDestructive === "function") {
           destBtn.setDestructive();
         } else {
-          btn.setWarning();
+          const legacyBtn = btn as unknown as { setWarning(): void };
+          legacyBtn.setWarning();
         }
         btn
           .setButtonText($("setting.sync.clear_remote"))
@@ -1013,7 +1017,7 @@ export class SettingTab extends PluginSettingTab {
           dump("[fast-note-sync] arrayBuffer loaded. size in bytes:", arrayBuffer.byteLength);
 
           dump("[fast-note-sync] unzipping file contents with fflate...");
-          const unzipped = unzipSync(new Uint8Array(arrayBuffer));
+          const unzipped: Record<string, Uint8Array> = unzipSync(new Uint8Array(arrayBuffer));
           dump("[fast-note-sync] unzip completed. Total items in zip:", Object.keys(unzipped).length);
 
           // 4. 自动检测根目录前缀（寻找 manifest.json 所在位置） / Automatically detect root prefix in zip
@@ -1051,7 +1055,6 @@ export class SettingTab extends PluginSettingTab {
             }
 
             dump(`[fast-note-sync] writing binary data to: ${path}`);
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             await this.plugin.app.vault.adapter.writeBinary(path, content.buffer as ArrayBuffer);
           }
           dump("[fast-note-sync] all files successfully extracted and written to filesystem.");
@@ -1103,7 +1106,7 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.isShowNotice) {
           this.plugin.settings.isShowNotice = value
           await this.plugin.saveAndReloadServices()
-          this.display()
+          this.refresh()
         }
       }),
     )
@@ -1288,7 +1291,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.autoRedirectEnabled).onChange(async (value) => {
         this.plugin.settings.autoRedirectEnabled = value
         await this.plugin.saveAndReloadServices()
-        this.display()
+        this.refresh()
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.auto_redirect_desc"))
@@ -1396,7 +1399,7 @@ export class SettingTab extends PluginSettingTab {
       btn.setButtonText($("ui.button.reset")).onClick(async () => {
         await this.plugin.setCommandHotkey("open-sync-log", "Ctrl+Shift+Q")
         this.lastViewMode = "" // 强制重新渲染内容
-        this.display()
+        this.refresh()
       })
     })
 
@@ -1446,7 +1449,7 @@ export class SettingTab extends PluginSettingTab {
       btn.setButtonText($("ui.button.reset")).onClick(async () => {
         await this.plugin.setCommandHotkey("open-sync-menu", "Ctrl+Shift+W")
         this.lastViewMode = "" // 强制重新渲染内容
-        this.display()
+        this.refresh()
       })
     })
 
@@ -1496,7 +1499,7 @@ export class SettingTab extends PluginSettingTab {
       btn.setButtonText($("ui.button.reset")).onClick(async () => {
         await this.plugin.setCommandHotkey("open-settings", "Ctrl+Shift+S")
         this.lastViewMode = "" // 强制重新渲染内容
-        this.display()
+        this.refresh()
       })
     })
   }
@@ -1506,7 +1509,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.syncEnabled) {
           this.plugin.settings.syncEnabled = value
-          this.display()
+          this.refresh()
           await this.plugin.saveAndReloadServices("syncEnabled")
         }
       }),
@@ -1548,7 +1551,7 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.concurrencyControlEnabled) {
           this.plugin.settings.concurrencyControlEnabled = value
           this.plugin.menuManager.refreshConcurrencyIndicator()
-          this.display()
+          this.refresh()
           await this.plugin.saveAndReloadServices("concurrencyControlEnabled")
         }
       }),
@@ -1724,7 +1727,7 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.cloudPreviewEnabled) {
           this.plugin.settings.cloudPreviewEnabled = value
           await this.plugin.saveAndReloadServices()
-          this.display()
+          this.refresh()
         }
       }),
     )

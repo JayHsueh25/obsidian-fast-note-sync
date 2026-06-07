@@ -4222,25 +4222,25 @@ body .suggestion-container {
   }
 }
 
-.fns-sso-title-icon--warning {
-  color: var(--color-red) !important;
-  background-color: color-mix(in srgb, var(--color-red) 8%, var(--background-primary)) !important;
-  border-color: color-mix(in srgb, var(--color-red) 25%, var(--background-modifier-border)) !important;
+.fns-share-header-group .fns-share-title-icon.fns-sso-title-icon--warning {
+  color: var(--color-red);
+  background-color: color-mix(in srgb, var(--color-red) 8%, var(--background-primary));
+  border-color: color-mix(in srgb, var(--color-red) 25%, var(--background-modifier-border));
 }
 
-.fns-sso-title-icon--safe {
-  color: var(--interactive-accent) !important;
-  background-color: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary)) !important;
-  border-color: color-mix(in srgb, var(--interactive-accent) 25%, var(--background-modifier-border)) !important;
+.fns-share-header-group .fns-share-title-icon.fns-sso-title-icon--safe {
+  color: var(--interactive-accent);
+  background-color: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary));
+  border-color: color-mix(in srgb, var(--interactive-accent) 25%, var(--background-modifier-border));
 }
 
-.fns-sso-badge--warning {
-  color: var(--color-red) !important;
-  background-color: color-mix(in srgb, var(--color-red) 8%, var(--background-secondary)) !important;
-  border-color: color-mix(in srgb, var(--color-red) 20%, var(--background-modifier-border-faint)) !important;
+.fns-file-badge.fns-sso-badge--warning {
+  color: var(--color-red);
+  background-color: color-mix(in srgb, var(--color-red) 8%, var(--background-secondary));
+  border-color: color-mix(in srgb, var(--color-red) 20%, var(--background-modifier-border-faint));
 
   .fns-file-icon {
-    color: var(--color-red) !important;
+    color: var(--color-red);
   }
 }
 
@@ -4315,12 +4315,12 @@ body .suggestion-container {
 
   &.fns-sso-btn-confirm--warning {
     background-color: var(--color-red);
-    color: #fff;
+    color: #ffffff;
     border-color: transparent;
     box-shadow: 0 4px 12px color-mix(in srgb, var(--color-red) 25%, transparent);
 
     &:hover {
-      background-color: color-mix(in srgb, var(--color-red) 90%, #fff);
+      background-color: color-mix(in srgb, var(--color-red) 90%, #ffffff);
       transform: translateY(-1px);
       box-shadow: 0 6px 16px color-mix(in srgb, var(--color-red) 35%, transparent);
     }

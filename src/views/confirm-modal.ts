@@ -47,8 +47,8 @@ export class ConfirmModal extends Modal {
                     if (typeof destBtn.setDestructive === "function") {
                         destBtn.setDestructive();
                     } else {
-                        // eslint-disable-next-line @typescript-eslint/no-deprecated
-                        btn.setWarning();
+                        const legacyBtn = btn as unknown as { setWarning(): void };
+                        legacyBtn.setWarning();
                     }
                 } else {
                     btn.setCta();

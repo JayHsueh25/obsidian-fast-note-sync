@@ -290,7 +290,7 @@ function deReceiveProtobufToDTO(action: WSAction.WSReceiveAction, data: Uint8Arr
                 const pbObj = proto.v1.FileSyncUploadMessage.toObject(
                     proto.v1.FileSyncUploadMessage.decode(data),
                     { defaults: true, longs: Number }
-                ) as proto.v1.IFileSyncUploadMessage;
+                ) as proto.v1.FileSyncUploadMessage.$Properties;
                 return {
                     path: pbObj.path,
                     pathHash: pbObj.pathHash,
@@ -306,7 +306,7 @@ function deReceiveProtobufToDTO(action: WSAction.WSReceiveAction, data: Uint8Arr
                 const pbObj = proto.v1.FileSyncDownloadMessage.toObject(
                     proto.v1.FileSyncDownloadMessage.decode(data),
                     { defaults: true, longs: Number }
-                ) as proto.v1.IFileSyncDownloadMessage;
+                ) as proto.v1.FileSyncDownloadMessage.$Properties;
                 return {
                     path: pbObj.path,
                     contentHash: pbObj.contentHash,
