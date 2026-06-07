@@ -1,4 +1,3 @@
-/* eslint-disable */
 import * as $protobuf from "protobufjs";
 import Long from "long";
 
