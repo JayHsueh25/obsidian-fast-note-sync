@@ -289,6 +289,24 @@ export class FileHashManager {
   }
 
   /**
+   * Bulk-set hashes from a scanned hash map and persist once.
+   * Used to eagerly commit computed hashes during scan, breaking the
+   * Catch-22 where hashes are never persisted because SyncEnd is never received.
+   */
+  bulkSetFromScanned(scanned: Map<string, { hash: string; mtime: number; size: number }>): void {
+    if (scanned.size === 0) return;
+    let changed = false;
+    for (const [path, cache] of scanned) {
+      const existing = this.hashMap.get(path);
+      if (!existing || existing.mtime <= cache.mtime) {
+        this.hashMap.set(path, { hash: cache.hash, mtime: cache.mtime, size: cache.size });
+        changed = true;
+      }
+    }
+    if (changed) this.saveToStorage();
+  }
+
+  /**
    * 清清理已排除文件的哈希
    * 当同步排除设置变更时调用
    */
