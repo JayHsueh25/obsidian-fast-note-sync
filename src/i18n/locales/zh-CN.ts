@@ -316,8 +316,8 @@ export default {
   "ui.log.action.VaultScanningSummary_incremental": "同步开始(增量) - 哈希计算",
   "ui.log.action.FolderSync_full": "文件夹同步(全量)",
   "ui.log.action.FolderSync_incremental": "文件夹同步(增量)",
-  "ui.log.action.FolderSyncEnd_full": "文件夹同步结束(全量)",
-  "ui.log.action.FolderSyncEnd_incremental": "文件夹同步结束(增量)",
+  "ui.log.action.FolderSyncEnd_full": "文件夹同步预估(全量)",
+  "ui.log.action.FolderSyncEnd_incremental": "文件夹同步预估(增量)",
   "ui.log.action.FolderSyncModify": "文件夹同步创建",
   "ui.log.action.FolderSyncDelete": "文件夹同步删除",
   "ui.log.action.FolderSyncRename": "文件夹同步重命名",
@@ -331,8 +331,8 @@ export default {
   "ui.log.action.NoteSyncNeedPush": "笔记需要上传",
   "ui.log.action.NoteSyncMtime": "笔记同步时间",
   "ui.log.action.NoteSyncDelete": "笔记同步删除",
-  "ui.log.action.NoteSyncEnd_full": "笔记同步结束(全量)",
-  "ui.log.action.NoteSyncEnd_incremental": "笔记同步结束(增量)",
+  "ui.log.action.NoteSyncEnd_full": "笔记同步预估(全量)",
+  "ui.log.action.NoteSyncEnd_incremental": "笔记同步预估(增量)",
   "ui.log.action.NoteSyncRename": "笔记同步重命名",
   "ui.log.action.NoteModify": "笔记修改",
   "ui.log.action.NoteDelete": "笔记删除",
@@ -343,8 +343,8 @@ export default {
   "ui.log.action.FileSyncChunkDownload": "附件同步下载",
   "ui.log.action.FileSyncDelete": "附件同步删除",
   "ui.log.action.FileSyncMtime": "附件同步时间",
-  "ui.log.action.FileSyncEnd_full": "附件同步结束(全量)",
-  "ui.log.action.FileSyncEnd_incremental": "附件同步结束(增量)",
+  "ui.log.action.FileSyncEnd_full": "附件同步预估(全量)",
+  "ui.log.action.FileSyncEnd_incremental": "附件同步预估(增量)",
   "ui.log.action.FileSyncRename": "附件同步重命名",
   "ui.log.action.FileUpload": "附件分片上传",
   "ui.log.action.FileUploadCheck": "附件上传检查",
@@ -370,8 +370,8 @@ export default {
   "ui.log.action.SettingSyncNeedUpload": "配置同步需要上传",
   "ui.log.action.SettingSyncMtime": "配置同步时间",
   "ui.log.action.SettingSyncDelete": "配置同步删除",
-  "ui.log.action.SettingSyncEnd_full": "配置同步结束(全量)",
-  "ui.log.action.SettingSyncEnd_incremental": "配置同步结束(增量)",
+  "ui.log.action.SettingSyncEnd_full": "配置同步预估(全量)",
+  "ui.log.action.SettingSyncEnd_incremental": "配置同步预估(增量)",
   "ui.log.action.SettingModify": "配置文件修改",
   "ui.log.action.SettingDelete": "配置文件删除",
   "ui.log.action.SyncEnd_full": "同步大项结束(全量)",
@@ -379,6 +379,9 @@ export default {
   "ui.log.action.SettingClear": "清理远端配置",
   "ui.log.action.SettingSyncClear": "同步清理远端配置",
   "ui.log.action.ShareSyncRefresh": "分享状态刷新",
+
+
+
 
   // --- ui.button ---
   "ui.button.confirm": "确认",

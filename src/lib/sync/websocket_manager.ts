@@ -1,6 +1,6 @@
 import { moment, Platform } from "obsidian";
 
-import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./operator_file";
+import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue, receiveFileUploadSessionNotFound } from "./operator_file";
 import { dump, addRandomParam, showSyncNotice, safeStringify } from "../utils/helpers";
 import { enSendDTOToProtobuf, deReceivePacket } from "../../pb/protobuf_mapper";
 import { receiveOperators, startupSync, startupFullSync } from "./operator";
@@ -300,6 +300,8 @@ export class WebSocketManager {
       // 处理冲突相关错误码
       if (data.code === ERROR_SYNC_CONFLICT) {
         this.handleConflictError(data);
+      } else if (data.code === 463 && typeof data.data?.sessionID === "string") {
+        receiveFileUploadSessionNotFound(data.data.sessionID, this.plugin);
       } else {
         const errorMsg = data.message || "";
         const errorDetails = data.details ? " Details=" + data.details : "";

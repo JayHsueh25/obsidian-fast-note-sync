@@ -251,6 +251,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         }
     } catch (error) {
         dumpError("读取配置文件出错:", error);
+        plugin.configSyncTasks.completed++;
         return
     }
 

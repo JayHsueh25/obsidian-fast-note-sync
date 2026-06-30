@@ -18,6 +18,9 @@ const activeUploadsMap = new Map<string, { cancelled: boolean }>()
 // 全局中止信号，用于插件卸载时
 export let isPluginUnloading = false;
 
+// 会话 ID 到文件路径的映射，用于处理 463 会话不存在错误
+const sessionIdToPathMap = new Map<string, string>()
+
 /**
  * 获取临时分片目录路径
  */
@@ -426,6 +429,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     return
   }
   dump(`Receive file need upload (queued): `, data.path, data.sessionId)
+  sessionIdToPathMap.set(data.sessionId, data.path)
 
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
   if (!file) {
@@ -441,6 +445,10 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   }
 
   const chunkSize = data.chunkSize || 1024 * 1024
+  const actualTotalChunks = file.stat.size === 0 ? 1 : Math.ceil(file.stat.size / chunkSize)
+
+  // 始终在进入并发队列前就累加待上传分片总数，以精确驱动进度条
+  plugin.totalChunksToUpload += actualTotalChunks
 
   const runUpload = async () => {
     // 标记该路径进入活跃上传状态
@@ -462,7 +470,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
         dump(`Failed to read file for upload: ${data.path}`, e)
       }
       if (!content) {
+        plugin.totalChunksToUpload -= actualTotalChunks
         plugin.concurrencyLimiter.releaseSlot(data.path)
+        plugin.fileSyncTasks.completed++
         return;
       }
 
@@ -475,8 +485,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       // 记录当前文件的 mtime/size 到缓存，以便后续利用
       plugin.fileHashManager.setFileHash(data.path, contentHash, file.stat.mtime, file.stat.size)
 
-      // 如果是空文件，强制设置分片数量为 1，发送一个空分片以通知服务端上传完成
-      const actualTotalChunks = content.byteLength === 0 ? 1 : Math.ceil(content.byteLength / chunkSize)
+      // 使用外层计算好的 actualTotalChunks
 
       // 断点续传：从 localStorage 读取上次中断的 checkpoint
       // Resume upload: read checkpoint from localStorage for the last interrupted upload
@@ -498,9 +507,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
         dump(`Failed to read upload checkpoint for ${data.path}`, e)
       }
 
-      // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
-      if (plugin.getWatchEnabled()) {
-        plugin.totalChunksToUpload += actualTotalChunks
+      // 如从断点恢复，则同步累加已上传计数以对齐进度
+      if (startChunkIndex > 0) {
+        plugin.uploadedChunksCount += startChunkIndex
       }
 
       // 打印上传信息表格
@@ -586,6 +595,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           // Clear checkpoint on cancel to avoid stale session reuse
           try { plugin.app.saveLocalStorage(checkpointKey, null) } catch { /* ignore */ }
           plugin.concurrencyLimiter.releaseSlot(data.path)
+          plugin.fileSyncTasks.completed++
           return;
         }
 
@@ -639,12 +649,14 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     } catch (e) {
       dump(`Upload process error for ${data.path}`, e);
       // 异常退出时清除 checkpoint，避免下次用无效的 sessionId 继续
-      // Clear checkpoint on exception to avoid resuming with an invalid session
       try { plugin.app.saveLocalStorage(checkpointKey, null) } catch { /* ignore */ }
+      plugin.totalChunksToUpload -= actualTotalChunks
       plugin.concurrencyLimiter.releaseSlot(data.path);
+      plugin.fileSyncTasks.completed++
     } finally {
       // 任务结束（完成或取消/失败），移除活跃标记
       activeUploadsMap.delete(data.path);
+      sessionIdToPathMap.delete(data.sessionId);
     }
   }
 
@@ -1372,6 +1384,7 @@ export const receiveFileUploadAck = function (data: { lastTime?: number; path?: 
   if (data.path) {
     plugin.concurrencyLimiter.releaseSlot(data.path)
   }
+  plugin.fileSyncTasks.completed++
 }
 
 // 收到 FileDeleteAck，仅当路径仍在 pending set 中时才从 hashManager 移除
@@ -1386,5 +1399,21 @@ export const receiveFileDeleteAck = function (data: { lastTime?: number; path?: 
   }
   if (data.path) {
     plugin.concurrencyLimiter.releaseSlot(data.path)
+  }
+}
+
+/**
+ * 收到服务端 463 错误（上传附件会话不存在），清理该文件的活跃上传状态并增加完成计数
+ */
+export const receiveFileUploadSessionNotFound = function (sessionId: string, plugin: FastSync) {
+  const path = sessionIdToPathMap.get(sessionId)
+  if (path) {
+    const active = activeUploadsMap.get(path)
+    if (active) {
+      active.cancelled = true
+    }
+    plugin.concurrencyLimiter.releaseSlot(path)
+    plugin.fileSyncTasks.completed++
+    dump(`FileUploadSessionNotFound: Cleaned active state and completed task for path: ${path} (${sessionId})`)
   }
 }
