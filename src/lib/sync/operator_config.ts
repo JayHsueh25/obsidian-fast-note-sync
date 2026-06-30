@@ -217,7 +217,6 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
     if (!isPathInConfigSyncDirs(data.path, plugin)) {
         plugin.configSyncTasks.completed++
-        plugin.progressTracker.recordDownloadComplete('setting');
         return
     }
 
@@ -225,12 +224,10 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
     if (configIsPathExcluded(data.path, plugin)) {
         plugin.configSyncTasks.completed++
-        plugin.progressTracker.recordDownloadComplete('setting');
         return
     }
     if (isVirtual) {
         plugin.configSyncTasks.completed++
-        plugin.progressTracker.recordDownloadComplete('setting');
         return
     }
 
@@ -259,13 +256,11 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     } catch (error) {
         dumpError("读取配置文件出错:", error);
         plugin.configSyncTasks.completed++;
-        plugin.progressTracker.recordDownloadComplete('setting');
         return
     }
 
     if (!contentBuf || mtime === 0) {
         plugin.configSyncTasks.completed++;
-        plugin.progressTracker.recordDownloadComplete('setting');
         return;
     }
 

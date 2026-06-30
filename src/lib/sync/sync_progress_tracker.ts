@@ -16,6 +16,9 @@ interface TypeProgress {
   pageTaskCompleted: number;   // Processed items (completed, error, skipped) / 已处理的项数
   allPagesReceived: boolean;   // Has the last SyncPage (isLast: true) been received / 是否已收到最后一页
 
+  // New field: precise received total from server for completion check / 实际收到的精准任务总数，仅用于完成判定，防卡死
+  receivedTaskTotal: number;
+
   // Current page download status (used specifically for triggering page ACKs)
   downloadPageIndex: number;  // Current page index / 当前页码
   downloadPageCount: number;  // Expected items in current page / 当前页包含的项数
@@ -74,6 +77,7 @@ export class SyncProgressTracker {
         pageTaskTotal: 0,
         pageTaskCompleted: 0,
         allPagesReceived: false,
+        receivedTaskTotal: 0,
         downloadPageIndex: -1,
         downloadPageCount: 0,
         downloadPageDone: 0
@@ -145,8 +149,19 @@ export class SyncProgressTracker {
   }
 
   /**
-   * Record page control message metadata. Accumulates total unconditionally.
-   * 记录分页控制消息元数据，无条件累加分母总任务数（每个 SyncPage 批次追加）。
+   * Set the authoritative total task count for download phase.
+   * 一步到位地设置第三阶段（下载/处理）的权威任务总数。
+   */
+  setDownloadTotal(type: SyncType, total: number): void {
+    const prog = this.progressMap.get(type);
+    if (!prog) return;
+    prog.pageTaskTotal = total;
+    this.notify();
+  }
+
+  /**
+   * Record page control message metadata.
+   * 记录分页控制消息元数据。
    */
   recordPageProgress(type: SyncType, pageIndex: number, totalCount: number, isLast: boolean): void {
     const prog = this.progressMap.get(type);
@@ -156,9 +171,19 @@ export class SyncProgressTracker {
     prog.downloadPageCount = totalCount;
     prog.downloadPageDone = 0;
 
-    // 无条件累加：分母来自每批 SyncPage 的 totalCount 之和
-    prog.pageTaskTotal += totalCount;
+    // Accumulate precisely received total task count from server / 累加绝对精准的已收到任务总数
+    prog.receivedTaskTotal += totalCount;
     prog.allPagesReceived = isLast;
+
+    // Correct UI total if received count exceeds it / 如果实际收到的数量超过了估算值，调大估算分母
+    if (prog.pageTaskTotal < prog.receivedTaskTotal) {
+      prog.pageTaskTotal = prog.receivedTaskTotal;
+    }
+
+    // Sync UI total with precise received total on final page / 如果是最后一页，使 UI 估算分母与实际接收总数对齐
+    if (isLast) {
+      prog.pageTaskTotal = prog.receivedTaskTotal;
+    }
 
     this.notify();
   }
@@ -182,7 +207,9 @@ export class SyncProgressTracker {
     if (!this.activeTypes.has(type)) return true;
     const prog = this.progressMap.get(type);
     if (!prog) return true;
-    return prog.uploadComplete && prog.allPagesReceived && prog.pageTaskCompleted >= prog.pageTaskTotal;
+    // Use receivedTaskTotal instead of estimated pageTaskTotal to prevent hang due to estimation mismatch
+    // 使用实际收到的精准任务数判定完成，防止因估算偏差导致同步挂起
+    return prog.uploadComplete && prog.allPagesReceived && prog.pageTaskCompleted >= prog.receivedTaskTotal;
   }
 
   /**
@@ -259,7 +286,9 @@ export class SyncProgressTracker {
       }
     }
 
-    const avgDownloadRatio = activeDownloadCount > 0 ? (downloadSum / activeDownloadCount) : 1;
+    // If no download pages are active yet, the ratio should be 0 instead of 1 to prevent progress jump to 99%.
+    // 如果尚未激活任何下载分页，比例应为 0 而非 1，以防进度条直接跳跃到 99%。
+    const avgDownloadRatio = activeDownloadCount > 0 ? (downloadSum / activeDownloadCount) : 0;
     const downloadPct = avgDownloadRatio * downloadTotalWeight;
 
     return Math.min(100, Math.round(5 + uploadTotalWeight + downloadPct));

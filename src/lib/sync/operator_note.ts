@@ -292,24 +292,20 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   if (plugin.settings.readonlySyncEnabled) {
     dump(`Read-only mode: Intercepted note upload request for ${data.path}`)
     plugin.noteSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('note');
     return
   }
   if (isPathExcluded(data.path, plugin)) {
     plugin.noteSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('note');
     return
   }
   dump(`Receive note need push:`, data.path)
   if (!data.path.endsWith(".md")) {
     plugin.noteSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('note');
     return
   }
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
   if (!file) {
     plugin.noteSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('note');
     return
   }
 

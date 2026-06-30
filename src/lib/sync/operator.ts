@@ -282,6 +282,7 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
 
   const trueTotal = tasks.needUpload + tasks.needModify + tasks.needSyncMtime + tasks.needDelete;
   const trackerType = type === "config" ? "setting" : type;
+  plugin.progressTracker.setDownloadTotal(trackerType as SyncType, trueTotal);
   plugin.progressTracker.recordUploadComplete(trackerType as SyncType);
 
   // 1.1 注意：v1.1 协议中 End 消息不再携带 messages 列表。

@@ -422,12 +422,10 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   if (plugin.settings.readonlySyncEnabled) {
     dump(`Read-only mode: Intercepted file upload request for ${data.path}`)
     plugin.fileSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('file');
     return
   }
   if (isPathExcluded(data.path, plugin)) {
     plugin.fileSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('file');
     return
   }
   dump(`Receive file need upload (queued): `, data.path, data.sessionId)
@@ -437,14 +435,12 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   if (!file) {
     dump(`File not found for upload: ${data.path} `)
     plugin.fileSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('file');
     return
   }
   if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
     dump(`Skip file upload for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, file.stat.size)
     showSyncNotice(`Fast Note Sync skipped large file upload: ${data.path}`, 5000)
     plugin.fileSyncTasks.completed++
-    plugin.progressTracker.recordDownloadComplete('file');
     return
   }
 
@@ -477,7 +473,6 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
         plugin.totalChunksToUpload -= actualTotalChunks
         plugin.concurrencyLimiter.releaseSlot(data.path)
         plugin.fileSyncTasks.completed++
-        plugin.progressTracker.recordDownloadComplete('file');
         return;
       }
 
@@ -601,7 +596,6 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           try { plugin.app.saveLocalStorage(checkpointKey, null) } catch { /* ignore */ }
           plugin.concurrencyLimiter.releaseSlot(data.path)
           plugin.fileSyncTasks.completed++
-          plugin.progressTracker.recordDownloadComplete('file');
           return;
         }
 
@@ -659,7 +653,6 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       plugin.totalChunksToUpload -= actualTotalChunks
       plugin.concurrencyLimiter.releaseSlot(data.path);
       plugin.fileSyncTasks.completed++
-      plugin.progressTracker.recordDownloadComplete('file');
     } finally {
       // 任务结束（完成或取消/失败），移除活跃标记
       activeUploadsMap.delete(data.path);
