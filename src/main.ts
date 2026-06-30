@@ -77,6 +77,7 @@ export default class FastSync extends Plugin {
     totalCount: number;
     isLast: boolean;
     completedCount: number;
+    context: string;
   }>();
 
   onDownloadTaskCompleted(type: "note" | "file" | "setting" | "folder") {
@@ -101,8 +102,11 @@ export default class FastSync extends Plugin {
 
     if (!action) return;
 
+    const pageState = this.syncPageStateMap.get(type);
+    const msgContext = pageState?.context || this.syncState.activeSyncContext || "";
+
     this.websocket.Send(action, {
-      context: this.syncState.activeSyncContext || "",
+      context: msgContext,
       vault: this.settings.vault,
       pageIndex: pageIndex
     });

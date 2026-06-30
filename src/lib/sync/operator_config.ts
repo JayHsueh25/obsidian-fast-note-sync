@@ -278,7 +278,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     void plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
         plugin.configSyncTasks.completed++;
-    });
+    }, (data as any).context);
 };
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {

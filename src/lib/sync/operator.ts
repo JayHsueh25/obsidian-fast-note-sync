@@ -1,7 +1,7 @@
 import { TFolder, TFile, normalizePath } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck, receiveFileDeleteAck, isPluginUnloading } from "./operator_file";
-import { hashContent, hashContentAsync, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, hashFileAsync, formatFileSize } from "../utils/helpers";
+import { hashContent, hashContentAsync, dump, dumpError, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, hashFileAsync, formatFileSize } from "../utils/helpers";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear, receiveConfigModifyAck, receiveConfigDeleteAck } from "./operator_config";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./operator_note";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "../utils/types";
@@ -67,16 +67,16 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
 
   // 模块进度的完成判定：已处理的明细数达到需处理总数（即使未收到 End 消息，只要完成数达标也视为结束，增强网络容错）
   const noteTasksTotal = plugin.noteSyncTasks.needUpload + plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime + plugin.noteSyncTasks.needDelete;
-  const noteSyncDone = (plugin.noteSyncEnd || plugin.noteSyncTasks.completed >= noteTasksTotal) && plugin.noteSyncTasks.completed >= noteTasksTotal;
+  const noteSyncDone = plugin.noteSyncEnd && plugin.noteSyncTasks.completed >= noteTasksTotal;
 
   const fileTasksTotal = plugin.fileSyncTasks.needUpload + plugin.fileSyncTasks.needModify + plugin.fileSyncTasks.needSyncMtime + plugin.fileSyncTasks.needDelete;
-  const fileSyncDone = (plugin.fileSyncEnd || plugin.fileSyncTasks.completed >= fileTasksTotal) && plugin.fileSyncTasks.completed >= fileTasksTotal;
+  const fileSyncDone = plugin.fileSyncEnd && plugin.fileSyncTasks.completed >= fileTasksTotal;
 
   const configTasksTotal = plugin.configSyncTasks.needUpload + plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime + plugin.configSyncTasks.needDelete;
-  const configSyncDone = (plugin.configSyncEnd || plugin.configSyncTasks.completed >= configTasksTotal) && plugin.configSyncTasks.completed >= configTasksTotal;
+  const configSyncDone = plugin.configSyncEnd && plugin.configSyncTasks.completed >= configTasksTotal;
 
   const folderTasksTotal = plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete;
-  const folderSyncDone = (plugin.folderSyncEnd || plugin.folderSyncTasks.completed >= folderTasksTotal) && plugin.folderSyncTasks.completed >= folderTasksTotal;
+  const folderSyncDone = plugin.folderSyncEnd && plugin.folderSyncTasks.completed >= folderTasksTotal;
 
   const allSyncDone = (!plugin.settings.syncEnabled || (noteSyncDone && folderSyncDone && (plugin.settings.cloudPreviewEnabled || fileSyncDone))) &&
     (!plugin.settings.configSyncEnabled || configSyncDone);
@@ -302,7 +302,7 @@ export const receiveOperators: Map<WSAction.WSReceiveAction, OperatorHandler> = 
 /**
  * 统一处理分页控制消息
  */
-function handleSyncPage(data: unknown, plugin: FastSync, type: "note" | "file" | "setting" | "folder"): void {
+async function handleSyncPage(data: unknown, plugin: FastSync, type: "note" | "file" | "setting" | "folder"): Promise<void> {
   const pageMsg = data as {
     pageIndex: number;
     pageSize: number;
@@ -313,17 +313,20 @@ function handleSyncPage(data: unknown, plugin: FastSync, type: "note" | "file" |
 
   dump(`[PageSync] Received page info for ${type}, pageIndex: ${pageMsg.pageIndex}, totalCount: ${pageMsg.totalCount}, isLast: ${pageMsg.isLast}`);
 
+  // 登记当前下载分页状态 (Register page metadata)
   plugin.syncPageStateMap.set(type, {
     pageIndex: pageMsg.pageIndex,
     pageSize: pageMsg.pageSize,
     totalCount: pageMsg.totalCount,
     isLast: pageMsg.isLast,
-    completedCount: 0
+    completedCount: 0,
+    context: pageMsg.context
   });
 
   if (pageMsg.totalCount === 0) {
     dump(`[PageSync] Page ${pageMsg.pageIndex} for ${type} is empty. Sending ACK immediately.`);
     plugin.sendSyncPageAck(type, pageMsg.pageIndex);
+    return;
   }
 }
 
@@ -955,14 +958,14 @@ async function sendInBatches<T extends Record<string, unknown>>(
   items: T[],
   buildPayload: (chunk: T[], batchIndex: number, totalBatches: number) => Record<string, unknown>,
   onLastBatchAcked?: (allItems: T[]) => void,
-  chunkSize = 100
+  syncUpChunkNum = plugin.syncState.syncUpChunkNum
 ): Promise<void> {
   const total = items.length;
-  const totalBatches = Math.max(1, Math.ceil(total / chunkSize));
+  const totalBatches = Math.max(1, Math.ceil(total / syncUpChunkNum));
 
   for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-    const start = batchIndex * chunkSize;
-    const chunk = total > 0 ? items.slice(start, start + chunkSize) : [];
+    const start = batchIndex * syncUpChunkNum;
+    const chunk = total > 0 ? items.slice(start, start + syncUpChunkNum) : [];
     const isLast = batchIndex === totalBatches - 1;
     const payload = buildPayload(chunk, batchIndex, totalBatches);
 

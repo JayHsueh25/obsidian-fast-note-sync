@@ -340,7 +340,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   void plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.removeIgnoredFile(file.path)
     plugin.noteSyncTasks.completed++
-  })
+  }, (data as any).context)
   dump(`Note modify send`, sendData.path, sendData.contentHash, sendData.mtime, sendData.pathHash)
 }
 
