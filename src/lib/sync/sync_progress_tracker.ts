@@ -27,6 +27,7 @@ interface TypeProgress {
 
   uploadTasksBase: number;    // 上传阶段完成任务的基准数（避免影响 isTypeFullyDone 计算）
   expectedPages: number;      // 预期分页总数
+  initialAckSent: boolean;    // Has the initial ACK (pageIndex = -1) been sent / 是否已发送初始 ACK
 }
 
 /**
@@ -64,6 +65,17 @@ export class SyncProgressTracker {
     return this.progressMap.get(type)?.pageTaskTotal || 0;
   }
 
+  isInitialAckSent(type: SyncType): boolean {
+    return this.progressMap.get(type)?.initialAckSent || false;
+  }
+
+  setInitialAckSent(type: SyncType, sent: boolean): void {
+    const prog = this.progressMap.get(type);
+    if (prog) {
+      prog.initialAckSent = sent;
+    }
+  }
+
   /**
    * Reset the tracker for a new sync session.
    * 重置追踪器以开始新的同步会话。
@@ -86,7 +98,8 @@ export class SyncProgressTracker {
         downloadPageCount: 0,
         downloadPageDone: 0,
         uploadTasksBase: 0,
-        expectedPages: 0
+        expectedPages: 0,
+        initialAckSent: false
       });
     }
 
@@ -149,7 +162,12 @@ export class SyncProgressTracker {
     if (prog.downloadPageDone >= prog.downloadPageCount && prog.downloadPageIndex !== -1) {
       const completedPage = prog.downloadPageIndex;
       prog.downloadPageIndex = -1; // Reset to avoid double triggering / 重置以防重复触发
-      if (this.onPageComplete) {
+      
+      // 如果最后一页已收到，无需发送最终确认 ACK (已由服务端主动销毁缓存)
+      // If the last page has been received, no need to send final confirmation ACK (cache cleared by server)
+      if (prog.allPagesReceived) {
+        dump(`[SyncProgressTracker] [recordCompleted] Last page (${completedPage}) completed for type: ${type}, skipping final ACK`);
+      } else if (this.onPageComplete) {
         dump(`[SyncProgressTracker] [onPageComplete] triggering page ACK for type: ${type}, pageIndex: ${completedPage}`);
         this.onPageComplete(type, completedPage);
       }

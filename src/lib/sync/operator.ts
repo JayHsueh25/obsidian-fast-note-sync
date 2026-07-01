@@ -1,7 +1,7 @@
 import { TFolder, TFile, normalizePath } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck, receiveFileDeleteAck, isPluginUnloading } from "./operator_file";
-import { hashContent, hashContentAsync, dump, dumpError, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, hashFileAsync, formatFileSize } from "../utils/helpers";
+import { hashContent, hashContentAsync, dump, dumpError, isPathExcluded, isFolderSyncPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, hashFileAsync, formatFileSize } from "../utils/helpers";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear, receiveConfigModifyAck, receiveConfigDeleteAck } from "./operator_config";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./operator_note";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "../utils/types";
@@ -252,7 +252,13 @@ async function handleSyncPage(data: unknown, plugin: FastSync, type: "note" | "f
 
   if (pageMsg.totalCount === 0) {
     dump(`[PageSync] Page ${pageMsg.pageIndex} for ${type} is empty. Sending ACK immediately.`);
-    plugin.progressTracker.onPageComplete?.(type, pageMsg.pageIndex);
+    // 如果是最后一页，无需发送确认 ACK (已由服务端主动销毁缓存)
+    // If it's the last page, no need to send confirmation ACK (cache cleared by server)
+    if (pageMsg.isLast) {
+      dump(`[PageSync] Page ${pageMsg.pageIndex} for ${type} is the last page and empty. Skipping ACK.`);
+    } else {
+      plugin.progressTracker.onPageComplete?.(type, pageMsg.pageIndex);
+    }
     return;
   }
 }
@@ -362,11 +368,12 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
   if (plugin.progressTracker.getPhase() === "download") {
     for (const t of plugin.progressTracker.getActiveTypes()) {
       const taskTotal = plugin.progressTracker.getTypeTaskTotal(t);
-      if (taskTotal > 0) {
+      if (taskTotal > 0 && !plugin.progressTracker.isInitialAckSent(t)) {
         dump(`[Sync] Triggering initial ACK for type: ${t}, total tasks: ${taskTotal}`);
+        plugin.progressTracker.setInitialAckSent(t, true);
         plugin.sendSyncPageAck(t, -1);
       } else {
-        dump(`[Sync] Skipping initial ACK for type: ${t} because total tasks is 0`);
+        dump(`[Sync] Skipping initial ACK for type: ${t} because total tasks is 0 or initial ACK already sent`);
       }
     }
   }
@@ -542,9 +549,9 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         }
 
         try {
-          if (isPathExcluded(file.path, plugin)) continue;
           if (file instanceof TFolder) {
             if (file.path === "/") continue;
+            if (isFolderSyncPathExcluded(file.path, plugin)) continue;
             let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
             if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime")) && plugin.folderSnapshotManager.getMtime(file.path) !== undefined) continue;
             folders.push({
@@ -555,6 +562,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           }
 
           if (file instanceof TFile) {
+            if (isPathExcluded(file.path, plugin)) continue;
             if (file.extension === "md") {
               if (isLoadLastTime
                 && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
@@ -670,7 +678,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           let folderCount = 0;
           for (const path of trackedFolderPaths) {
             if (++folderCount % 100 === 0) await sleep(0);
-            if (isPathExcluded(path, plugin)) continue;
+            if (isFolderSyncPathExcluded(path, plugin)) continue;
             if (!localFolderPathsSet.has(path)) {
               delFolders.push({ path: path, pathHash: hashContent(path) });
             }
@@ -701,7 +709,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           let folderCount = 0;
           for (const path of trackedFolderPaths) {
             if (++folderCount % 100 === 0) await sleep(0);
-            if (isPathExcluded(path, plugin)) continue;
+            if (isFolderSyncPathExcluded(path, plugin)) continue;
             if (!localFolderPathsSet.has(path)) {
               missingFolders.push({ path: path, pathHash: hashContent(path) });
             }
