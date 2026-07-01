@@ -21,9 +21,11 @@ export const startupFullSync = async (plugin: FastSync) => {
   void handleSync(plugin, false);
 };
 
-export const resetSettingSyncTime = async (plugin: FastSync) => {
+export const resetSettingSyncTime = async (plugin: FastSync, silent = false) => {
   plugin.localStorageManager.clearSyncTime();
-  showSyncNotice($("setting.debug.clear_time_success"));
+  if (!silent) {
+    showSyncNotice($("setting.debug.clear_time_success"));
+  }
 };
 
 export const rebuildAllHashes = async (plugin: FastSync) => {
