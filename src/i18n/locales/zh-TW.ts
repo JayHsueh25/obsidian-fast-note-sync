@@ -314,8 +314,8 @@ export default {
   "ui.log.category_other": "其他",
   "ui.log.summary.title_full": "同步完成（全量）",
   "ui.log.summary.title_inc": "同步完成（增量）",
-  "ui.log.summary.title_cancelled_full": "同步已取消（全量）",
-  "ui.log.summary.title_cancelled_inc": "同步已取消（增量）",
+  "ui.log.summary.title_cancelled_full": "同步已取消 (全量)",
+  "ui.log.summary.title_cancelled_inc": "同步已取消 (增量)",
   "ui.log.summary.no_changes": "無變更",
 
   // --- ui.log.action ---

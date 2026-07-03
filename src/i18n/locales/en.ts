@@ -227,8 +227,8 @@ export default {
   "ui.menu.full_sync": "Full Sync",
   "ui.menu.full_sync_desc": "Performs a full comparison with the server, syncs all files, and cleans up all empty local folders",
   "ui.menu.reconnecting": "Reconnecting. Will automatically sync after connection is established...",
-  "ui.menu.cancel_full_first": "Please cancel full sync before running default sync",
-  "ui.menu.cancel_default_first": "Please cancel default sync before running full sync",
+  "ui.menu.cancel_full_first": "Please cancel the full sync first before performing the default sync",
+  "ui.menu.cancel_default_first": "Please cancel the default sync first before performing the full sync",
   "ui.menu.enable_sync": "Enable Sync",
   "ui.menu.enable_sync_desc": "All configured syncs are currently enabled.",
   "ui.menu.disable_sync": "Temporarily Disable Sync",
@@ -252,7 +252,7 @@ export default {
   "setting.debug.reset_all": "Reset Settings",
   "setting.debug.reset_all_desc": "Restores all settings except remote configuration to their default values and clears the note library configuration file saved remotely. This action is irreversible, please proceed with caution.",
   "setting.debug.reset_all_success": "All settings have been reset to default",
- 
+
   // --- ui.status ---
   "ui.status.syncing": "Syncing",
   "ui.status.starting": "Starting sync",
@@ -314,8 +314,8 @@ export default {
   "ui.log.category_other": "Other",
   "ui.log.summary.title_full": "Sync Complete (Full)",
   "ui.log.summary.title_inc": "Sync Complete (Incremental)",
-  "ui.log.summary.title_cancelled_full": "Sync Cancelled (Full)",
-  "ui.log.summary.title_cancelled_inc": "Sync Cancelled (Incremental)",
+  "ui.log.summary.title_cancelled_full": "Sync cancelled (full)",
+  "ui.log.summary.title_cancelled_inc": "Sync cancelled (incremental)",
   "ui.log.summary.no_changes": "No changes",
 
   // --- ui.log.action ---
