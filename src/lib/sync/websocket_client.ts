@@ -387,7 +387,7 @@ export class WebSocketClient {
 
   public Send(action: string, data: unknown, after?: () => void) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      dump(`Service not connected, queuing message: ${action}`);
+      dump(`Service not connected, message dropped (will rely on next sync cycle): ${action}`);
       return;
     }
 
