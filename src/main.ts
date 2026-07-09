@@ -22,7 +22,8 @@ import { EventManager } from "./lib/utils/events_manager";
 import { WebSocketManager } from "./lib/sync/websocket_manager";
 import { MenuManager } from "./lib/ui/menu_manager";
 import { LockManager } from "./lib/sync/lock_manager";
-import { handleSync } from "./lib/sync/operator";
+import { handleSync, cancelSync } from "./lib/sync/operator";
+import { cleanupConfigReloadTimer } from "./lib/sync/operator_config";
 import { HttpApiService } from "./lib/api/http_api_service";
 import { SyncState } from "./lib/sync/sync_state";
 import { RuntimeConfig } from "./lib/sync/runtime_config";
@@ -613,10 +614,14 @@ export default class FastSync extends Plugin {
   }
 
   onunload() {
+    // 取消当前正在进行的同步，重置运行时状态
+    cancelSync(this)
     abortAllFileOperations()
     this.localStorageManager?.stopWatch()
     this.shareIndicatorManager?.unload()
     this.menuManager?.unload()
+    // 清理配置重载模块级计时器，避免插件卸载后仍触发回调
+    cleanupConfigReloadTimer()
     // 卸载前强制落盘防抖累积的哈希/快照写入，避免丢失
     this.fileHashManager?.flush()
     this.configHashManager?.flush()

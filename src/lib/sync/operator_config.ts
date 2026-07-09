@@ -22,6 +22,19 @@ export const CONFIG_THEME_EXTS_TO_WATCH = [".css", ".json"]
 let reloadTimer: number | null = null
 const pendingConfigUpdates: Map<string, string> = new Map()
 
+/**
+ * 清理模块级 reloadTimer（插件卸载时调用，避免定时器在插件卸载后仍触发回调）
+ * Clean up the module-level reloadTimer (called on plugin unload to prevent the
+ * timer callback from firing after the plugin instance has been unloaded)
+ */
+export const cleanupConfigReloadTimer = function (): void {
+    if (reloadTimer) {
+        window.clearTimeout(reloadTimer)
+        reloadTimer = null
+    }
+    pendingConfigUpdates.clear()
+}
+
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false, content?: string) {
     if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
