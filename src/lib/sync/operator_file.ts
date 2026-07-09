@@ -546,7 +546,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
         frame.set(chunk, 40)
 
         // 在 before 回调中检查是否已被取消,这样可以在数据真正进入 WebSocket 缓冲区之前拦截
-        const cancelled = await plugin.websocket.SendBinary(
+        const sendResult = await plugin.websocket.SendBinary(
           frame,
           BINARY_PREFIX_FILE_SYNC,
           () => {
@@ -590,8 +590,26 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           }
         )
 
+        // 连接不可用：分片未真正发出，立即中断循环，保留断点续传 checkpoint（不清除、不标记完成任务数），
+        // 等重连后由后续同步轮次从 checkpoint 处续传，避免"分片假成功"（空转跑完循环但数据未真正传完）
+        // Connection unavailable: the chunk was never actually sent. Break immediately and keep the
+        // resume checkpoint intact (don't clear it, don't bump the completed counter) so the next
+        // sync round can resume from the checkpoint after reconnect.
+        if (sendResult === 'closed') {
+          dump(`Upload interrupted for ${data.path} at chunk ${i}/${actualTotalChunks} (connection closed), will resume after reconnect`);
+          SyncLogManager.getInstance().addOrUpdateLog({
+            id: data.sessionId,
+            type: 'send',
+            action: 'FileUpload',
+            path: data.path,
+            status: 'pending',
+            message: '连接已断开，等待重连后续传'
+          });
+          return;
+        }
+
         // 如果被取消,立即退出循环并释放槽位
-        if (cancelled || isPluginUnloading) {
+        if (sendResult === 'cancelled' || isPluginUnloading) {
           // 取消时清除 checkpoint，避免使用已失效的会话
           // Clear checkpoint on cancel to avoid stale session reuse
           try { plugin.app.saveLocalStorage(checkpointKey, null) } catch { /* ignore */ }

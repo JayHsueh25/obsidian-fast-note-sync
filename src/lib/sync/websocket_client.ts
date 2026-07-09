@@ -426,20 +426,33 @@ export class WebSocketClient {
     }
   }
 
-  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, before?: () => boolean, after?: () => void): Promise<boolean> {
+  /**
+   * 发送二进制分片。返回值细化为三态，避免"连接已断开未发送"和"发送成功"
+   * 都返回 false 而无法区分（分片假成功问题）：
+   * - 'sent': 已实际写入 WebSocket
+   * - 'cancelled': 被调用方 before() 钩子主动取消
+   * - 'closed': 连接不可用，未发送
+   */
+  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, before?: () => boolean, after?: () => void): Promise<'sent' | 'cancelled' | 'closed'> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return false;
+      return 'closed';
     }
 
     if (!prefix || prefix.length !== 2) {
-      return false;
+      return 'closed';
     }
 
     if (before && before()) {
-      return true; // Cancelled
+      return 'cancelled';
     }
 
     await this.waitForBufferDrain();
+
+    // 等待缓冲区排空期间连接可能已断开，发送前再次确认，避免对已关闭的 socket 调用 send()
+    // Connection may have dropped while waiting for the buffer to drain; re-check before sending
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return 'closed';
+    }
 
     const prefixBytes = new TextEncoder().encode(prefix);
     let dataToSend: Uint8Array;
@@ -458,6 +471,6 @@ export class WebSocketClient {
     this.ws.send(dataToSend);
     after?.();
     this.notifyActivity();
-    return false;
+    return 'sent';
   }
 }
