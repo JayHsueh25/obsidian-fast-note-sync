@@ -1169,20 +1169,24 @@ async function sendSyncInBatches<T1, T2, T3>(
 
 /**
  * 发送同步请求
- * 先发 FolderSync 并等待文件夹结构在本地落地，再发 NoteSync/FileSync，消除并发 createFolder 竞争
- * Send FolderSync first and wait for folder structure to be created locally before sending NoteSync/FileSync,
- * eliminating concurrent createFolder race conditions
+ * folder/note/file/setting 四类清单并发发出（不再串行等待 folder 屏障）；
+ * 并发下的 createFolder 竞态由各消息处理器的惰性建目录兜底承接（设计稿 §6.2）
+ * Send sync requests
+ * The four batch types (folder/note/file/setting) are dispatched concurrently (folder barrier removed);
+ * concurrent createFolder races are absorbed by each handler's lazy folder-creation fallback (design §6.2)
  */
 export const handleRequestSend = async function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData, folderData: FolderSyncData) {
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
+  const jobs: Promise<void>[] = [];
+
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
 
-    // 第一步：先分批发送 FolderSync，确保文件夹结构先于笔记/附件在本地建立
-    // Step 1: Batch-send FolderSync first to ensure folder structure is created before notes/files
+    // 并发分批发送 FolderSync / NoteSync / FileSync
+    // Concurrently batch-send FolderSync / NoteSync / FileSync
     dump(`[Sync] Starting batch send: ${folderData.folders.length} folders, ${noteData.notes.length} notes, ${fileData.files.length} files`);
-    await sendSyncInBatches(
+    jobs.push(sendSyncInBatches(
       plugin,
       "FolderSync",
       "FolderSyncBatchAck",
@@ -1204,33 +1208,9 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
         const paths = folderData.folders.map(f => f.path);
         plugin.folderSnapshotManager.setFolderMtimes(paths, Date.now());
       }
-    );
+    ));
 
-    // 第二步：等待 folderSyncDone（FolderSyncEnd 已收到且所有文件夹任务已完成）
-    // 超时兜底：30s 后无论如何继续，避免网络异常时挂起
-    // Step 2: Wait for folderSyncDone (FolderSyncEnd received and all folder tasks completed)
-    // Fallback timeout: continue after 30s regardless, to avoid hanging on network errors
-    await new Promise<void>((resolve) => {
-      const timeout = window.setTimeout(resolve, 30000);
-      const checkInterval = window.setInterval(() => {
-        if (!plugin.websocket?.isAuth) {
-          window.clearInterval(checkInterval);
-          window.clearTimeout(timeout);
-          resolve();
-          return;
-        }
-        const folderSyncDone = plugin.folderSyncEnd && plugin.folderSyncTasks.completed >= (plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete);
-        if (folderSyncDone) {
-          window.clearInterval(checkInterval);
-          window.clearTimeout(timeout);
-          resolve();
-        }
-      }, 50);
-    });
-
-    // 第三步：分批发送 NoteSync
-    // Step 3: Batch-send NoteSync
-    await sendSyncInBatches(
+    jobs.push(sendSyncInBatches(
       plugin,
       "NoteSync",
       "NoteSyncBatchAck",
@@ -1254,12 +1234,12 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
         }
         plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies);
       }
-    );
+    ));
 
-    // 第四步：分批发送 FileSync（云预览模式且未开启类型限制时跳过）
-    // Step 4: Batch-send FileSync (skip when cloud-preview is on without type restriction)
+    // 云预览模式且未开启类型限制时跳过 FileSync
+    // Skip FileSync when cloud-preview is on without type restriction
     if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
-      await sendSyncInBatches(
+      jobs.push(sendSyncInBatches(
         plugin,
         "FileSync",
         "FileSyncBatchAck",
@@ -1277,25 +1257,17 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
           ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: delChunk } : {}),
           ...(missingChunk.length > 0 ? { missingFiles: missingChunk } : {}),
         })
-      );
-    }
-
-    // 将已删除路径加入 pending set，等待 SyncEnd 确认服务端已处理后再从 hashManager 移除
-    // Populate pending delete sets; remove from hashManager only after SyncEnd confirms server processed
-    if (plugin.settings.offlineDeleteSyncEnabled) {
-      plugin.pendingDeleteNotePaths = new Set(noteData.delNotes.map(i => i.path));
-      plugin.pendingDeleteFilePaths = new Set(fileData.delFiles.map(i => i.path));
-      plugin.pendingDeleteFolderPaths = new Set(folderData.delFolders.map(i => i.path));
+      ));
     }
   }
 
   if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
-    // 第五步：分批发送 SettingSync（配置同步）
-    // Step 5: Batch-send SettingSync (config sync)
+    // 分批发送 SettingSync（配置同步），与上方三类并发发出
+    // Batch-send SettingSync (config sync), dispatched concurrently with the three types above
     // 注意：客户端发送字段名为 settings / delSettings / missingSettings（非 configs）
     // Note: client sends field names 'settings' / 'delSettings' / 'missingSettings' (not 'configs')
     const isCover = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) === 0;
-    await sendSyncInBatches(
+    jobs.push(sendSyncInBatches(
       plugin,
       "SettingSync",
       "SettingSyncBatchAck",
@@ -1320,8 +1292,24 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
         }
         plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies);
       }
-    );
+    ));
+  }
 
+  // 任一类失败不阻断其他类；失败类由 300s 总兜底（checkSyncCompletion）复位
+  // A failure in any single type does not block the others; a failed type is reset by the 300s overall fallback (checkSyncCompletion)
+  await Promise.allSettled(jobs);
+
+  if (plugin.settings.syncEnabled && shouldSyncNotes) {
+    // 将已删除路径加入 pending set，等待 SyncEnd 确认服务端已处理后再从 hashManager 移除
+    // Populate pending delete sets; remove from hashManager only after SyncEnd confirms server processed
+    if (plugin.settings.offlineDeleteSyncEnabled) {
+      plugin.pendingDeleteNotePaths = new Set(noteData.delNotes.map(i => i.path));
+      plugin.pendingDeleteFilePaths = new Set(fileData.delFiles.map(i => i.path));
+      plugin.pendingDeleteFolderPaths = new Set(folderData.delFolders.map(i => i.path));
+    }
+  }
+
+  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
     // 将已删除配置路径加入 pending set，等待 SettingSyncEnd 确认服务端已处理后再移除
     // Populate pending config delete set; remove from hashManager only after SettingSyncEnd
     if (plugin.settings.offlineDeleteSyncEnabled && plugin.configHashManager && plugin.configHashManager.isReady()) {
