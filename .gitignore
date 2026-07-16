@@ -29,6 +29,7 @@ CLAUDE.md
 .claude/
 Demo-Library/
 conflict-notes/
+
 # env
 .env
 configHashMap.json
