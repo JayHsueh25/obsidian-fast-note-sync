@@ -831,7 +831,14 @@ export class SettingTab extends PluginSettingTab {
               this.plugin.settings.networkLibrary = backup.networkLibrary
 
               // 重新初始化某些依赖库路径的动态默认值
-              const defaultExcludes = [`${getPluginDir(this.plugin)}/data.json`, `${this.app.vault.configDir}/community-plugins.json`]
+              // Reinitialize dynamic default values for certain dependency library paths
+              const defaultExcludes = [
+                `${getPluginDir(this.plugin)}/data.json`,
+                `${getPluginDir(this.plugin)}/configHashMap.json`,
+                `${getPluginDir(this.plugin)}/fileHashMap.json`,
+                `${getPluginDir(this.plugin)}/folderSnapshot.json`,
+                `${this.app.vault.configDir}/community-plugins.json`,
+              ]
               this.plugin.settings.syncExcludeFolders = JSON.stringify(defaultExcludes.map((pattern) => ({ pattern, caseSensitive: false })))
 
               // 确保客户端名称不被重置

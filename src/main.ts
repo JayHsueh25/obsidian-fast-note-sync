@@ -732,9 +732,13 @@ export default class FastSync extends Plugin {
     }
 
     // 仅在首次安装（无旧数据）时自动添加插件自身目录及核心配置排除
+    // Automatically add this plugin's own directory and core config exclusions only during clean install (no legacy data)
     if (!data) {
       const defaultExcludes = [
         `${pluginSelfDir}/data.json`,
+        `${pluginSelfDir}/configHashMap.json`,
+        `${pluginSelfDir}/fileHashMap.json`,
+        `${pluginSelfDir}/folderSnapshot.json`,
         `${this.app.vault.configDir}/community-plugins.json`,
       ];
       defaultExcludes.forEach(pattern => {
