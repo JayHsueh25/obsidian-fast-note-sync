@@ -496,7 +496,7 @@
   "ui.conflict.log_resolved_keep_current": "4ef61091a9873a88abcc6af95ba7274d",
   "ui.conflict.log_resolved_overwrite": "de99b5d7700986c512965fd1520ce312",
   "ui.conflict.menu_item": "800b54cc7aeb3a45422d068ce9c3314e",
-  "ui.conflict.modal_title": "87ddc062123386c7f84057ab142ab805",
+  "ui.conflict.modal_title": "04e0adb47d14fa53933ede149f432cdc",
   "ui.conflict.keep_current": "e0d6ded4a6ba037abb6e7614c463f991",
   "ui.conflict.keep_current_desc": "05ef53ff7774aa5116d97353f26c9861",
   "ui.conflict.keep_current_success": "d855f87b6e7e53c0c52b1a8fb9936264",
@@ -511,7 +511,7 @@
   "ui.conflict.action_failed": "60b4a1b1a316963ab908a8a25f82060f",
   "setting.sync.strategy_manual": "5d30ddd4ef68288de49fc7b8d2849318",
   "ui.menu.conflicts": "e4de4db94e1d601a37174a99eb8fbbcd",
-  "ui.conflict.modal_desc": "30a5f68afc637829a8f630171c0e347b",
+  "ui.conflict.modal_desc": "a6967d53d25356a0237fe7b5b35051a0",
   "ui.conflict.tooltip": "f59bee2651c5300bf8c46188ee55de6b",
   "ui.conflict.local_title": "ba147afe3a7f524a98d4fddb58646f64",
   "ui.conflict.base_title": "74594a4376322f9fa83cf53dfc4dcd47",
@@ -519,5 +519,6 @@
   "ui.conflict.final_title": "ff751469131f317b1839fc19d1134fd0",
   "ui.conflict.use_local": "36f8f437c1ee2dd3312766f63fb240df",
   "ui.conflict.use_remote": "4e9d9371166a9f9197f9e9f605584871",
-  "ui.log.action.NoteManualMergeConflict": "104dbf5046aa7849d304c0936fa29ebb"
+  "ui.log.action.NoteManualMergeConflict": "104dbf5046aa7849d304c0936fa29ebb",
+  "ui.conflict.resolved_notice": "fd949e2f34efd5b5d76dd3b08c34badc"
 }

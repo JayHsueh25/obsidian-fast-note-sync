@@ -4698,4 +4698,19 @@ body .suggestion-container {
   background: var(--background-modifier-hover);
 }
 
+/* 按钮内部加载动画图标 / Button spinner loading indicator */
+.fns-btn-loader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.fns-btn-loader svg {
+  width: 14px;
+  height: 14px;
+  animation: rotate 1.2s linear infinite;
+  stroke-width: 2.5;
+}
+
 /*# sourceMappingURL=styles.css.map */

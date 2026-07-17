@@ -1,4 +1,4 @@
-import { App, Modal, normalizePath } from "obsidian";
+import { App, Modal, normalizePath, setIcon } from "obsidian";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 import { hashContent, hashContentAsync, getPluginDir } from "../lib/utils/helpers";
@@ -301,6 +301,11 @@ export class ConflictResolveModal extends Modal {
       resolveBtn.disabled = true;
       cancelBtn.disabled = true;
 
+      // 动态在按钮最前面插入旋转的加载图标
+      const loaderSpan = resolveBtn.createSpan({ cls: "fns-btn-loader" });
+      setIcon(loaderSpan, "loader-2");
+      resolveBtn.prepend(loaderSpan);
+
       try {
         // Use raw textarea content directly — no diff markup to clean // 直接使用编辑器纯文本，无需清洗差异标记
         const finalContent = this.editorEl.value;
@@ -366,6 +371,7 @@ export class ConflictResolveModal extends Modal {
         this.close();
       } catch (err) {
         console.error("Failed to resolve conflict:", err);
+        loaderSpan.remove();
         resolveBtn.disabled = false;
         cancelBtn.disabled = false;
       }
