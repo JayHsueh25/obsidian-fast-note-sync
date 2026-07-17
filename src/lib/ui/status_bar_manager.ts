@@ -112,9 +112,6 @@ export class StatusBarManager {
       if (this.statusBarItem) {
         this.statusBarItem.removeAttribute("aria-label");
       }
-      if (!this.plugin.syncState.isSyncing) {
-        this.hide();
-      }
     }
   }
 

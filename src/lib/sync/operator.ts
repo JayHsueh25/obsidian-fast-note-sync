@@ -1162,7 +1162,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     if (plugin.syncState.activeSyncContext === context) {
       plugin.syncState.activeSyncContext = null; // 同步失败，清空上下文 / Sync failed, reset the context
       plugin.updateStatusBar($("ui.status.failed") || "Sync Failed");
-      window.setTimeout(() => plugin.updateStatusBar(""), 3000);
+      window.setTimeout(() => plugin.updateStatusBar(""), 10000);
     } else {
       dump(`[SyncContext] Stale sync session (context=${context}) failed after being superseded; skip clobbering active state.`);
     }
@@ -1220,7 +1220,7 @@ export function cancelSync(plugin: FastSync): void {
 
   plugin.progressTracker.forceComplete();
   plugin.updateStatusBar($("ui.status.cancelled") || "Sync Cancelled");
-  window.setTimeout(() => plugin.updateStatusBar(""), 3000);
+  window.setTimeout(() => plugin.updateStatusBar(""), 10000);
 
   // 记录一条“同步取消”的小结日志，供同步日志视图渲染卡片 / Record a "Sync Cancelled" summary log for rendering in the Sync Log View
   const syncType = plugin.syncState.currentSyncType;
