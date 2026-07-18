@@ -562,7 +562,12 @@ export class FileCloudPreview {
     // produce a path under the note's folder), causing the resulting cloud
     // URL to 404 on the server.
     let vaultPath = filePath;
-    const attachmentFolderPath = String((this.plugin.app.vault as any).getConfig("attachmentFolderPath") || "");
+    interface VaultWithConfig {
+      // Define getConfig method to avoid 'any' // 定义 getConfig 方法以避免 any
+      getConfig?(key: string): unknown;
+    }
+    const rawConfig = ((this.plugin.app.vault as unknown) as VaultWithConfig).getConfig?.("attachmentFolderPath");
+    const attachmentFolderPath = typeof rawConfig === "string" ? rawConfig : "";
     if (this.plugin.settings.cloudPreviewDynamicAttachment) {
       if (attachmentFolderPath) {
         const prefix = attachmentFolderPath.endsWith("/") ? attachmentFolderPath : attachmentFolderPath + "/";
